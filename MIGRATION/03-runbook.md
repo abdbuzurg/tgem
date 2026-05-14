@@ -31,11 +31,12 @@ can reference them:
 export TGEM_REPO=~/tgem
 export TGEM_DATE=$(date +%Y%m%d-%H%M%S)
 export TGEM_BACKUP=~/backups/tgem-${TGEM_DATE}
-export TGEM_NGINX_SITE=/etc/nginx/sites-available/<file>       # FILL IN
-export TGEM_PM2_PROCESS=<legacy-backend-name>                  # FILL IN, e.g. "tgem-backend"
-export TGEM_DB_USER=<user>                                     # FILL IN, from live App_dev.yaml
-export TGEM_DB_NAME=<db>                                       # FILL IN, from live App_dev.yaml
-export TGEM_DOMAIN=<your.public.domain>                        # FILL IN
+export TGEM_NGINX_SITE=/etc/nginx/sites-available/default       # FILL IN
+export TGEM_PM2_PROCESS=tgem-back                  # FILL IN, e.g. "tgem-backend"
+export TGEM_DB_USER=postgres                                     # FILL IN, from live App_dev.yaml
+export TGEM_DB_NAME=tgem                                       # FILL IN, from live App_dev.yaml
+export TGEM_DOMAIN=79.141.74.35                        # FILL IN
+export TGEM_PGBIN=/usr/lib/postgresql/16/bin
 echo "session: ${TGEM_DATE}, backup: ${TGEM_BACKUP}"
 ```
 
@@ -127,7 +128,7 @@ network position:
 ```sh
 $ docker run --rm --add-host host.docker.internal:host-gateway alpine:3.20 \
       sh -c 'apk add --no-cache postgresql-client >/dev/null && \
-             PGPASSWORD=<password> psql \
+             PGPASSWORD=password psql \
              -h host.docker.internal -U '"${TGEM_DB_USER}"' -d '"${TGEM_DB_NAME}"' \
              -c "select 1"'
 ```
@@ -160,10 +161,10 @@ Anything else is a **STOP** condition. Read `01-schema-diff.md` §5 BLOCKERS.
 `pg_dump` the production schema and compare to the rewrite's frozen baseline:
 
 ```sh
-$ pg_dump -h 127.0.0.1 -U ${TGEM_DB_USER} -d ${TGEM_DB_NAME} \
+$ pg_dump -h localhost -U ${TGEM_DB_USER} -d ${TGEM_DB_NAME} \
           --schema-only --no-owner --no-privileges \
           > ${TGEM_BACKUP}.preflight.sql || mkdir -p ${TGEM_BACKUP} && \
-  pg_dump -h 127.0.0.1 -U ${TGEM_DB_USER} -d ${TGEM_DB_NAME} \
+  pg_dump -h localhost -U ${TGEM_DB_USER} -d ${TGEM_DB_NAME} \
           --schema-only --no-owner --no-privileges \
           > ${TGEM_BACKUP}/preflight-live-schema.sql
 
@@ -220,7 +221,7 @@ about to change. The backup taken here is the single point of truth for
 ### 3.2.1 Database
 
 ```sh
-$ pg_dump -h 127.0.0.1 -U ${TGEM_DB_USER} -Fc ${TGEM_DB_NAME} \
+$ pg_dump -h localhost -U ${TGEM_DB_USER} -Fc ${TGEM_DB_NAME} \
           > ${TGEM_BACKUP}/db.dump
 $ ls -lh ${TGEM_BACKUP}/db.dump      # sanity check size
 ```
@@ -255,7 +256,7 @@ $ sudo readlink -f /etc/nginx/sites-enabled/$(basename ${TGEM_NGINX_SITE}) \
 You need this both for the .env.backend (§3.3) and for the rollback path.
 
 ```sh
-$ sudo cp _legacy/tgem-backend/configurations/App_dev.yaml \
+$ sudo cp ../home/tgem-backend/configurations/App_dev.yaml \
         ${TGEM_BACKUP}/App_dev.yaml.legacy
 $ sudo chmod 600 ${TGEM_BACKUP}/App_dev.yaml.legacy           # contains secrets
 ```
@@ -338,13 +339,17 @@ Rollback at this point: nothing — no host state has changed.
 The actual migration runs in two stages:
 
 1. **Goose stamp** — single SQL transaction, applied here by hand.
+```sh
+sed -n '/^-- §B\./,/^-- §C\./p' MIGRATION/01-migrations.sql \
+  | psql -h localhost -U ${TGEM_DB_USER} -d ${TGEM_DB_NAME} -1
+```
 2. **Migrations `00002`–`00006`** — applied automatically by the backend
    container's embedded `MigrateUp` when it starts in §3.5.
 
 ### 3.4.1 Apply the Goose stamp (§B from 01-migrations.sql)
 
 ```sh
-$ psql -h 127.0.0.1 -U ${TGEM_DB_USER} -d ${TGEM_DB_NAME} -1 <<'SQL'
+$ psql -h localhost -U ${TGEM_DB_USER} -d ${TGEM_DB_NAME} -1 <<'SQL'
 CREATE TABLE IF NOT EXISTS public.goose_db_version (
     id          serial      PRIMARY KEY,
     version_id  bigint      NOT NULL,
@@ -374,7 +379,7 @@ table doesn't get created and you can retry without partial state.
 Verify the stamp:
 
 ```sh
-$ psql -h 127.0.0.1 -U ${TGEM_DB_USER} -d ${TGEM_DB_NAME} \
+$ psql -h localhost -U ${TGEM_DB_USER} -d ${TGEM_DB_NAME} \
        -c "SELECT MAX(version_id) FROM goose_db_version WHERE is_applied;"
  max
 -----
