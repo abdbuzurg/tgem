@@ -39,7 +39,8 @@ INNER JOIN workers ON workers.id = invoice_objects.supervisor_worker_id
 LEFT JOIN districts ON districts.id = invoice_objects.district_id
 INNER JOIN objects ON objects.id = invoice_objects.object_id
 INNER JOIN teams ON teams.id = invoice_objects.team_id
-WHERE invoice_objects.id = $1;
+WHERE invoice_objects.id = $1
+  AND invoice_objects.project_id = $2;
 
 -- name: ListInvoiceObjectsPaginated :many
 SELECT

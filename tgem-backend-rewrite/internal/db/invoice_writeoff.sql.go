@@ -135,6 +135,7 @@ WHERE
     AND invoice_materials.invoice_id = $1
     AND material_locations.location_type = $2
     AND material_locations.location_id = $3
+    AND invoice_materials.project_id = $4
 ORDER BY materials.id
 `
 
@@ -142,6 +143,7 @@ type ListInvoiceWriteOffMaterialsForEditParams struct {
 	InvoiceID    pgtype.Int8 `json:"invoice_id"`
 	LocationType pgtype.Text `json:"location_type"`
 	LocationID   pgtype.Int8 `json:"location_id"`
+	ProjectID    pgtype.Int8 `json:"project_id"`
 }
 
 type ListInvoiceWriteOffMaterialsForEditRow struct {
@@ -157,7 +159,12 @@ type ListInvoiceWriteOffMaterialsForEditRow struct {
 }
 
 func (q *Queries) ListInvoiceWriteOffMaterialsForEdit(ctx context.Context, arg ListInvoiceWriteOffMaterialsForEditParams) ([]ListInvoiceWriteOffMaterialsForEditRow, error) {
-	rows, err := q.db.Query(ctx, listInvoiceWriteOffMaterialsForEdit, arg.InvoiceID, arg.LocationType, arg.LocationID)
+	rows, err := q.db.Query(ctx, listInvoiceWriteOffMaterialsForEdit,
+		arg.InvoiceID,
+		arg.LocationType,
+		arg.LocationID,
+		arg.ProjectID,
+	)
 	if err != nil {
 		return nil, err
 	}

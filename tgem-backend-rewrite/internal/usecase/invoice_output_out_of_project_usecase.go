@@ -36,14 +36,14 @@ type IInvoiceOutputOutOfProjectUsecase interface {
 	Count(data dto.InvoiceOutputOutOfProjectSearchParameters) (int64, error)
 	Create(data dto.InvoiceOutputOutOfProject) (model.InvoiceOutputOutOfProject, error)
 	Delete(id uint) error
-	GetInvoiceMaterialsWithoutSerialNumbers(id uint) ([]dto.InvoiceMaterialsWithoutSerialNumberView, error)
-	GetInvoiceMaterialsWithSerialNumbers(id uint) ([]dto.InvoiceMaterialsWithSerialNumberView, error)
+	GetInvoiceMaterialsWithoutSerialNumbers(id, projectID uint) ([]dto.InvoiceMaterialsWithoutSerialNumberView, error)
+	GetInvoiceMaterialsWithSerialNumbers(id, projectID uint) ([]dto.InvoiceMaterialsWithSerialNumberView, error)
 	Update(data dto.InvoiceOutputOutOfProject) (model.InvoiceOutputOutOfProject, error)
 	Confirmation(id uint) error
-	GetMaterialsForEdit(id uint) ([]dto.InvoiceOutputMaterialsForEdit, error)
+	GetMaterialsForEdit(id, projectID uint) ([]dto.InvoiceOutputMaterialsForEdit, error)
 	GetUniqueNameOfProjects(projectID uint) ([]string, error)
 	Report(filter dto.InvoiceOutputOutOfProjectReportFilter) (string, error)
-	GetDocument(deliveryCode string) (string, error)
+	GetDocument(deliveryCode string, projectID uint) (string, error)
 }
 
 func (u *invoiceOutputOutOfProjectUsecase) GetPaginated(page, limit int, filter dto.InvoiceOutputOutOfProjectSearchParameters) ([]dto.InvoiceOutputOutOfProjectPaginated, error) {
@@ -231,10 +231,11 @@ func (u *invoiceOutputOutOfProjectUsecase) Delete(id uint) error {
 	return tx.Commit(ctx)
 }
 
-func (u *invoiceOutputOutOfProjectUsecase) GetInvoiceMaterialsWithoutSerialNumbers(id uint) ([]dto.InvoiceMaterialsWithoutSerialNumberView, error) {
+func (u *invoiceOutputOutOfProjectUsecase) GetInvoiceMaterialsWithoutSerialNumbers(id, projectID uint) ([]dto.InvoiceMaterialsWithoutSerialNumberView, error) {
 	rows, err := u.q.ListInvoiceMaterialsWithoutSerialNumbers(context.Background(), db.ListInvoiceMaterialsWithoutSerialNumbersParams{
 		InvoiceType: pgText("output-out-of-project"),
 		InvoiceID:   pgInt8(id),
+		ProjectID:   pgInt8(projectID),
 	})
 	if err != nil {
 		return nil, err
@@ -254,10 +255,11 @@ func (u *invoiceOutputOutOfProjectUsecase) GetInvoiceMaterialsWithoutSerialNumbe
 	return out, nil
 }
 
-func (u *invoiceOutputOutOfProjectUsecase) GetInvoiceMaterialsWithSerialNumbers(id uint) ([]dto.InvoiceMaterialsWithSerialNumberView, error) {
+func (u *invoiceOutputOutOfProjectUsecase) GetInvoiceMaterialsWithSerialNumbers(id, projectID uint) ([]dto.InvoiceMaterialsWithSerialNumberView, error) {
 	rows, err := u.q.ListInvoiceMaterialsWithSerialNumbers(context.Background(), db.ListInvoiceMaterialsWithSerialNumbersParams{
 		InvoiceType: pgText("output-out-of-project"),
 		InvoiceID:   pgInt8(id),
+		ProjectID:   pgInt8(projectID),
 	})
 	if err != nil {
 		return nil, err
@@ -534,8 +536,11 @@ func (u *invoiceOutputOutOfProjectUsecase) Confirmation(id uint) error {
 	return tx.Commit(ctx)
 }
 
-func (u *invoiceOutputOutOfProjectUsecase) GetMaterialsForEdit(id uint) ([]dto.InvoiceOutputMaterialsForEdit, error) {
-	rows, err := u.q.ListInvoiceOutputOutOfProjectMaterialsForEdit(context.Background(), pgInt8(id))
+func (u *invoiceOutputOutOfProjectUsecase) GetMaterialsForEdit(id, projectID uint) ([]dto.InvoiceOutputMaterialsForEdit, error) {
+	rows, err := u.q.ListInvoiceOutputOutOfProjectMaterialsForEdit(context.Background(), db.ListInvoiceOutputOutOfProjectMaterialsForEditParams{
+		InvoiceID: pgInt8(id),
+		ProjectID: pgInt8(projectID),
+	})
 	if err != nil {
 		return []dto.InvoiceOutputMaterialsForEdit{}, nil
 	}
@@ -725,8 +730,11 @@ func (u *invoiceOutputOutOfProjectUsecase) GenerateExcelFile(details model.Invoi
 	return nil
 }
 
-func (u *invoiceOutputOutOfProjectUsecase) GetDocument(deliveryCode string) (string, error) {
-	invoice, err := u.q.GetInvoiceOutputOutOfProjectByDeliveryCode(context.Background(), pgText(deliveryCode))
+func (u *invoiceOutputOutOfProjectUsecase) GetDocument(deliveryCode string, projectID uint) (string, error) {
+	invoice, err := u.q.GetInvoiceOutputOutOfProjectByDeliveryCode(context.Background(), db.GetInvoiceOutputOutOfProjectByDeliveryCodeParams{
+		DeliveryCode: pgText(deliveryCode),
+		ProjectID:    pgInt8(projectID),
+	})
 	if err != nil {
 		return "", err
 	}

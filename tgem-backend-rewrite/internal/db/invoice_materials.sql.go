@@ -198,6 +198,7 @@ WHERE
     AND invoice_materials.is_defected = serial_number_movements.is_defected
     AND invoice_materials.invoice_type = $1
     AND invoice_materials.invoice_id = $2
+    AND invoice_materials.project_id = $3
     AND COALESCE(materials.has_serial_number, false) = true
 ORDER BY materials.name DESC
 `
@@ -205,6 +206,7 @@ ORDER BY materials.name DESC
 type ListInvoiceMaterialsWithSerialNumbersParams struct {
 	InvoiceType pgtype.Text `json:"invoice_type"`
 	InvoiceID   pgtype.Int8 `json:"invoice_id"`
+	ProjectID   pgtype.Int8 `json:"project_id"`
 }
 
 type ListInvoiceMaterialsWithSerialNumbersRow struct {
@@ -219,7 +221,7 @@ type ListInvoiceMaterialsWithSerialNumbersRow struct {
 }
 
 func (q *Queries) ListInvoiceMaterialsWithSerialNumbers(ctx context.Context, arg ListInvoiceMaterialsWithSerialNumbersParams) ([]ListInvoiceMaterialsWithSerialNumbersRow, error) {
-	rows, err := q.db.Query(ctx, listInvoiceMaterialsWithSerialNumbers, arg.InvoiceType, arg.InvoiceID)
+	rows, err := q.db.Query(ctx, listInvoiceMaterialsWithSerialNumbers, arg.InvoiceType, arg.InvoiceID, arg.ProjectID)
 	if err != nil {
 		return nil, err
 	}
@@ -262,6 +264,7 @@ INNER JOIN materials ON materials.id = material_costs.material_id
 WHERE
     invoice_materials.invoice_type = $1
     AND invoice_materials.invoice_id = $2
+    AND invoice_materials.project_id = $3
     AND COALESCE(materials.has_serial_number, false) = false
 ORDER BY materials.name DESC
 `
@@ -269,6 +272,7 @@ ORDER BY materials.name DESC
 type ListInvoiceMaterialsWithoutSerialNumbersParams struct {
 	InvoiceType pgtype.Text `json:"invoice_type"`
 	InvoiceID   pgtype.Int8 `json:"invoice_id"`
+	ProjectID   pgtype.Int8 `json:"project_id"`
 }
 
 type ListInvoiceMaterialsWithoutSerialNumbersRow struct {
@@ -282,7 +286,7 @@ type ListInvoiceMaterialsWithoutSerialNumbersRow struct {
 }
 
 func (q *Queries) ListInvoiceMaterialsWithoutSerialNumbers(ctx context.Context, arg ListInvoiceMaterialsWithoutSerialNumbersParams) ([]ListInvoiceMaterialsWithoutSerialNumbersRow, error) {
-	rows, err := q.db.Query(ctx, listInvoiceMaterialsWithoutSerialNumbers, arg.InvoiceType, arg.InvoiceID)
+	rows, err := q.db.Query(ctx, listInvoiceMaterialsWithoutSerialNumbers, arg.InvoiceType, arg.InvoiceID, arg.ProjectID)
 	if err != nil {
 		return nil, err
 	}

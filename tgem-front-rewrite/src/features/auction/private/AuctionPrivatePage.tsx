@@ -1,12 +1,11 @@
 import { HiArrowSmDown, HiArrowSmUp } from "react-icons/hi";
 import Button from "@shared/ui/Button";
-import { useNavigate } from "react-router-dom";
 import { useEffect, useState } from "react";
-import { LOGIN } from "@routes/paths";
 import toast, { Toaster } from "react-hot-toast";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { AuctionPrivateData, AuctionPrivateParticipantDataForSave, getDataForPrivateAuction, savePartisipantChanges } from "@features/auction/api";
 import LoadingDots from "@shared/ui/LoadingDots";
+import useLogout from "@app/hooks/useLogout";
 import React from "react";
 
 interface AuctionPrivate extends AuctionPrivateData {
@@ -16,17 +15,8 @@ interface AuctionPrivate extends AuctionPrivateData {
 
 export default function AuctionPrivate() {
 
-  const navigate = useNavigate();
   const queryClient = useQueryClient()
-
-  const logout = () => {
-    const loadingToast = toast.loading("Выход.....");
-    localStorage.removeItem("token");
-    localStorage.removeItem("username");
-    toast.dismiss(loadingToast);
-    toast.success("Операция успешна");
-    navigate(LOGIN);
-  }
+  const logout = useLogout()
 
   const [auctionData, setAuctionData] = useState<AuctionPrivate[]>([])
   const auctionPrivateDataQuery = useQuery<AuctionPrivateData[], Error>({

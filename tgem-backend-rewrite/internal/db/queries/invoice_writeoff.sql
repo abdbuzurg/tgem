@@ -77,6 +77,7 @@ WHERE
     AND invoice_materials.invoice_id = $1
     AND material_locations.location_type = $2
     AND material_locations.location_id = $3
+    AND invoice_materials.project_id = $4
 ORDER BY materials.id;
 
 -- name: ListInvoiceWriteOffReportData :many

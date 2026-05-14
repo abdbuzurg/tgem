@@ -1,7 +1,7 @@
 import { useEffect, useState } from "react"
 import Input from "@shared/ui/Input"
 import Button from "@shared/ui/Button"
-import { useMutation, useQuery } from "@tanstack/react-query"
+import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query"
 import loginUser from "@entities/auth/login"
 import { getEffectivePermissions } from "@entities/auth/permissions"
 import { useNavigate } from "react-router-dom"
@@ -16,6 +16,7 @@ import { ADMINISTRATOR_HOME_PAGE, AUCTION_PRIVATE, HOME } from "@routes/paths"
 export default function Login() {
   const navigate = useNavigate()
   const authContext = useAuth()
+  const queryClient = useQueryClient()
 
   // Clear any stale auth state when the login page first mounts. Intentionally
   // mount-only — depending on `authContext` re-fired this on every state
@@ -23,8 +24,14 @@ export default function Login() {
   // login success), wiping the perms back to []. clearContext is now stable
   // via useCallback so we could include it as a dep, but mount-only keeps
   // the intent obvious.
+  //
+  // queryClient.clear() defends against the case where the user navigates
+  // directly to /login with a stale cache (e.g. session expired mid-page).
+  // The useLogout hook already clears on the normal logout path; this is
+  // the belt-and-braces second line of defense.
   useEffect(() => {
     authContext.clearContext()
+    queryClient.clear()
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [])
 

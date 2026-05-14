@@ -6,9 +6,7 @@ import (
 	"backend-v2/internal/usecase"
 	"backend-v2/model"
 	"backend-v2/pkg/tempfiles"
-	"errors"
 	"fmt"
-	"os"
 	"path/filepath"
 	"strconv"
 	"strings"
@@ -169,7 +167,9 @@ func (handler *invoiceInputHandler) GetInvoiceMaterialsWithoutSerialNumbers(c *g
 		return
 	}
 
-	data, err := handler.invoiceInputUsecase.GetInvoiceMaterialsWithoutSerialNumbers(uint(id))
+	projectID := c.GetUint("projectID")
+
+	data, err := handler.invoiceInputUsecase.GetInvoiceMaterialsWithoutSerialNumbers(uint(id), projectID)
 	if err != nil {
 		response.ResponseError(c, fmt.Sprintf("Внутренняя ошибка сервера: %v", err))
 		return
@@ -186,7 +186,9 @@ func (handler *invoiceInputHandler) GetInvoiceMaterialsWithSerialNumbers(c *gin.
 		return
 	}
 
-	data, err := handler.invoiceInputUsecase.GetInvoiceMaterialsWithSerialNumbers(uint(id))
+	projectID := c.GetUint("projectID")
+
+	data, err := handler.invoiceInputUsecase.GetInvoiceMaterialsWithSerialNumbers(uint(id), projectID)
 	if err != nil {
 		response.ResponseError(c, fmt.Sprintf("Внутренняя ошибка сервера: %v", err))
 		return
@@ -231,6 +233,16 @@ func (handler *invoiceInputHandler) Update(c *gin.Context) {
 	updateData.Details.ProjectID = projectID
 	updateData.Details.ReleasedWorkerID = workerID
 
+	existing, err := handler.invoiceInputUsecase.GetByID(updateData.Details.ID)
+	if err != nil {
+		response.ResponseError(c, fmt.Sprintf("Не удалось найти накладную: %v", err))
+		return
+	}
+	if existing.ProjectID != projectID {
+		response.ResponseError(c, "Доступ запрещен: накладная принадлежит другому проекту")
+		return
+	}
+
 	data, err := handler.invoiceInputUsecase.Update(updateData)
 	if err != nil {
 		response.ResponseError(c, fmt.Sprintf("Could not perform the updation of Invoice: %v", err))
@@ -245,6 +257,17 @@ func (handler *invoiceInputHandler) Delete(c *gin.Context) {
 	id, err := strconv.ParseUint(idRaw, 10, 64)
 	if err != nil {
 		response.ResponseError(c, fmt.Sprintf("Неверное тело запроса: %v", err))
+		return
+	}
+
+	projectID := c.GetUint("projectID")
+	existing, err := handler.invoiceInputUsecase.GetByID(uint(id))
+	if err != nil {
+		response.ResponseError(c, fmt.Sprintf("Не удалось найти накладную: %v", err))
+		return
+	}
+	if existing.ProjectID != projectID {
+		response.ResponseError(c, "Доступ запрещен: накладная принадлежит другому проекту")
 		return
 	}
 
@@ -271,6 +294,10 @@ func (handler *invoiceInputHandler) Confirmation(c *gin.Context) {
 	invoiceInput, err := handler.invoiceInputUsecase.GetByID(uint(id))
 	if err != nil {
 		response.ResponseError(c, fmt.Sprintf("Внутренняя ошибка сервера: %v", err))
+		return
+	}
+	if invoiceInput.ProjectID != projectID {
+		response.ResponseError(c, "Доступ запрещен: накладная принадлежит другому проекту")
 		return
 	}
 
@@ -305,13 +332,13 @@ func (handler *invoiceInputHandler) Confirmation(c *gin.Context) {
 }
 
 func (handler *invoiceInputHandler) GetDocument(c *gin.Context) {
-	fileName := c.Param("deliveryCode") + ".pdf"
-	filePath := filepath.Join("./storage/import_excel/input/", fileName)
-	if _, err := os.Stat(filePath); errors.Is(err, os.ErrNotExist) {
-		response.ResponseError(c, fmt.Sprint("Внутренняя ошибка сервера: Файл не существует"))
+	deliveryCode := c.Param("deliveryCode")
+	filePath, _ := resolveInvoiceDoc(deliveryCode, ".pdf", "./storage/import_excel/input", "input")
+	if filePath == "" {
+		response.ResponseError(c, "Внутренняя ошибка сервера: Файл не существует")
 		return
 	}
-	c.FileAttachment(filePath, fileName)
+	c.FileAttachment(filePath, deliveryCode+".pdf")
 }
 
 func (handler *invoiceInputHandler) UniqueCode(c *gin.Context) {
@@ -417,7 +444,9 @@ func (handler *invoiceInputHandler) GetMaterialsForEdit(c *gin.Context) {
 	idRaw := c.Param("id")
 	id, err := strconv.ParseUint(idRaw, 10, 64)
 
-	result, err := handler.invoiceInputUsecase.GetMaterialsForEdit(uint(id))
+	projectID := c.GetUint("projectID")
+
+	result, err := handler.invoiceInputUsecase.GetMaterialsForEdit(uint(id), projectID)
 	if err != nil {
 		response.ResponseError(c, fmt.Sprintf("Внутренняя ошибка сервера: %v", err))
 		return

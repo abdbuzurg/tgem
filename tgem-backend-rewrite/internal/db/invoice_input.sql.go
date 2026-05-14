@@ -313,7 +313,13 @@ INNER JOIN materials ON material_costs.material_id = materials.id
 WHERE
     invoice_materials.invoice_type = 'input'
     AND invoice_materials.invoice_id = $1
+    AND invoice_materials.project_id = $2
 `
+
+type ListInvoiceInputMaterialsForEditParams struct {
+	InvoiceID pgtype.Int8 `json:"invoice_id"`
+	ProjectID pgtype.Int8 `json:"project_id"`
+}
 
 type ListInvoiceInputMaterialsForEditRow struct {
 	MaterialID      int64          `json:"material_id"`
@@ -326,8 +332,8 @@ type ListInvoiceInputMaterialsForEditRow struct {
 	HasSerialNumber bool           `json:"has_serial_number"`
 }
 
-func (q *Queries) ListInvoiceInputMaterialsForEdit(ctx context.Context, invoiceID pgtype.Int8) ([]ListInvoiceInputMaterialsForEditRow, error) {
-	rows, err := q.db.Query(ctx, listInvoiceInputMaterialsForEdit, invoiceID)
+func (q *Queries) ListInvoiceInputMaterialsForEdit(ctx context.Context, arg ListInvoiceInputMaterialsForEditParams) ([]ListInvoiceInputMaterialsForEditRow, error) {
+	rows, err := q.db.Query(ctx, listInvoiceInputMaterialsForEdit, arg.InvoiceID, arg.ProjectID)
 	if err != nil {
 		return nil, err
 	}

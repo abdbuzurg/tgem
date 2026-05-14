@@ -29,7 +29,7 @@ type IInvoiceObjectUsecase interface {
 	GetPaginated(limit, page int, projectID uint) ([]dto.InvoiceObjectPaginated, error)
 	Create(data dto.InvoiceObjectCreate) (model.InvoiceObject, error)
 	Delete(id uint) error
-	GetInvoiceObjectDescriptiveDataByID(id uint) (dto.InvoiceObjectWithMaterialsDescriptive, error)
+	GetInvoiceObjectDescriptiveDataByID(id, projectID uint) (dto.InvoiceObjectWithMaterialsDescriptive, error)
 	GetTeamsMaterials(projectID, teamID uint) ([]dto.InvoiceObjectTeamMaterials, error)
 	GetSerialNumberOfMaterial(projectID, materialID uint, locationID uint) ([]string, error)
 	GetAvailableMaterialAmount(projectID, materialID, teamID uint) (float64, error)
@@ -38,9 +38,12 @@ type IInvoiceObjectUsecase interface {
 	GetOperationsBasedOnMaterialsInTeamID(projectID, teamID uint) ([]dto.InvoiceObjectOperationsBasedOnTeam, error)
 }
 
-func (u *invoiceObjectUsecase) GetInvoiceObjectDescriptiveDataByID(id uint) (dto.InvoiceObjectWithMaterialsDescriptive, error) {
+func (u *invoiceObjectUsecase) GetInvoiceObjectDescriptiveDataByID(id, projectID uint) (dto.InvoiceObjectWithMaterialsDescriptive, error) {
 	ctx := context.Background()
-	row, err := u.q.GetInvoiceObjectDescriptiveDataByID(ctx, int64(id))
+	row, err := u.q.GetInvoiceObjectDescriptiveDataByID(ctx, db.GetInvoiceObjectDescriptiveDataByIDParams{
+		ID:        int64(id),
+		ProjectID: pgInt8(projectID),
+	})
 	if err != nil {
 		return dto.InvoiceObjectWithMaterialsDescriptive{}, err
 	}
@@ -60,6 +63,7 @@ func (u *invoiceObjectUsecase) GetInvoiceObjectDescriptiveDataByID(id uint) (dto
 	withSNRows, err := u.q.ListInvoiceMaterialsWithSerialNumbers(ctx, db.ListInvoiceMaterialsWithSerialNumbersParams{
 		InvoiceType: pgText("object"),
 		InvoiceID:   pgInt8(id),
+		ProjectID:   pgInt8(projectID),
 	})
 	if err != nil {
 		return dto.InvoiceObjectWithMaterialsDescriptive{}, err
@@ -68,6 +72,7 @@ func (u *invoiceObjectUsecase) GetInvoiceObjectDescriptiveDataByID(id uint) (dto
 	withoutSNRows, err := u.q.ListInvoiceMaterialsWithoutSerialNumbers(ctx, db.ListInvoiceMaterialsWithoutSerialNumbersParams{
 		InvoiceType: pgText("object"),
 		InvoiceID:   pgInt8(id),
+		ProjectID:   pgInt8(projectID),
 	})
 	if err != nil {
 		return dto.InvoiceObjectWithMaterialsDescriptive{}, err

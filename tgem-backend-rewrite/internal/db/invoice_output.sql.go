@@ -150,11 +150,17 @@ SELECT id, district_id, project_id, warehouse_manager_worker_id, released_worker
        recipient_worker_id, team_id, delivery_code, date_of_invoice, notes, confirmation
 FROM invoice_outputs
 WHERE delivery_code = $1
+  AND project_id = $2
 LIMIT 1
 `
 
-func (q *Queries) GetInvoiceOutputByDeliveryCode(ctx context.Context, deliveryCode pgtype.Text) (InvoiceOutput, error) {
-	row := q.db.QueryRow(ctx, getInvoiceOutputByDeliveryCode, deliveryCode)
+type GetInvoiceOutputByDeliveryCodeParams struct {
+	DeliveryCode pgtype.Text `json:"delivery_code"`
+	ProjectID    pgtype.Int8 `json:"project_id"`
+}
+
+func (q *Queries) GetInvoiceOutputByDeliveryCode(ctx context.Context, arg GetInvoiceOutputByDeliveryCodeParams) (InvoiceOutput, error) {
+	row := q.db.QueryRow(ctx, getInvoiceOutputByDeliveryCode, arg.DeliveryCode, arg.ProjectID)
 	var i InvoiceOutput
 	err := row.Scan(
 		&i.ID,
@@ -369,7 +375,13 @@ WHERE
     material_locations.location_type = 'warehouse'
     AND invoice_materials.invoice_type = 'output'
     AND invoice_materials.invoice_id = $1
+    AND invoice_materials.project_id = $2
 `
+
+type ListInvoiceOutputMaterialsForEditParams struct {
+	InvoiceID pgtype.Int8 `json:"invoice_id"`
+	ProjectID pgtype.Int8 `json:"project_id"`
+}
 
 type ListInvoiceOutputMaterialsForEditRow struct {
 	MaterialID      int64          `json:"material_id"`
@@ -381,8 +393,8 @@ type ListInvoiceOutputMaterialsForEditRow struct {
 	HasSerialNumber bool           `json:"has_serial_number"`
 }
 
-func (q *Queries) ListInvoiceOutputMaterialsForEdit(ctx context.Context, invoiceID pgtype.Int8) ([]ListInvoiceOutputMaterialsForEditRow, error) {
-	rows, err := q.db.Query(ctx, listInvoiceOutputMaterialsForEdit, invoiceID)
+func (q *Queries) ListInvoiceOutputMaterialsForEdit(ctx context.Context, arg ListInvoiceOutputMaterialsForEditParams) ([]ListInvoiceOutputMaterialsForEditRow, error) {
+	rows, err := q.db.Query(ctx, listInvoiceOutputMaterialsForEdit, arg.InvoiceID, arg.ProjectID)
 	if err != nil {
 		return nil, err
 	}

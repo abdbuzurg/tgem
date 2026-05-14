@@ -32,13 +32,13 @@ func NewInvoiceWriteOffUsecase(pool *pgxpool.Pool) IInvoiceWriteOffUsecase {
 type IInvoiceWriteOffUsecase interface {
 	GetAll() ([]model.InvoiceWriteOff, error)
 	GetPaginated(page, limit int, data dto.InvoiceWriteOffSearchParameters) ([]dto.InvoiceWriteOffPaginated, error)
-	GetInvoiceMaterialsWithoutSerialNumbers(id uint) ([]dto.InvoiceMaterialsWithoutSerialNumberView, error)
+	GetInvoiceMaterialsWithoutSerialNumbers(id, projectID uint) ([]dto.InvoiceMaterialsWithoutSerialNumberView, error)
 	GetByID(id uint) (model.InvoiceWriteOff, error)
 	Create(data dto.InvoiceWriteOff) (model.InvoiceWriteOff, error)
 	Update(data dto.InvoiceWriteOff) (model.InvoiceWriteOff, error)
 	Delete(id uint) error
 	Count(filter dto.InvoiceWriteOffSearchParameters) (int64, error)
-	GetMaterialsForEdit(id uint, locationType string, locationID uint) ([]dto.InvoiceWriteOffMaterialsForEdit, error)
+	GetMaterialsForEdit(id uint, locationType string, locationID, projectID uint) ([]dto.InvoiceWriteOffMaterialsForEdit, error)
 	Confirmation(id, projectID uint) error
 	Report(parameters dto.InvoiceWriteOffReportParameters) (string, error)
 	GetMaterialsInLocation(projectID, locationID uint, locationType string) ([]dto.InvoiceReturnMaterialForSelect, error)
@@ -322,10 +322,11 @@ func (u *invoiceWriteOffUsecase) Count(filter dto.InvoiceWriteOffSearchParameter
 	})
 }
 
-func (u *invoiceWriteOffUsecase) GetInvoiceMaterialsWithoutSerialNumbers(id uint) ([]dto.InvoiceMaterialsWithoutSerialNumberView, error) {
+func (u *invoiceWriteOffUsecase) GetInvoiceMaterialsWithoutSerialNumbers(id, projectID uint) ([]dto.InvoiceMaterialsWithoutSerialNumberView, error) {
 	rows, err := u.q.ListInvoiceMaterialsWithoutSerialNumbers(context.Background(), db.ListInvoiceMaterialsWithoutSerialNumbersParams{
 		InvoiceType: pgText("writeoff"),
 		InvoiceID:   pgInt8(id),
+		ProjectID:   pgInt8(projectID),
 	})
 	if err != nil {
 		return nil, err
@@ -345,11 +346,12 @@ func (u *invoiceWriteOffUsecase) GetInvoiceMaterialsWithoutSerialNumbers(id uint
 	return out, nil
 }
 
-func (u *invoiceWriteOffUsecase) GetMaterialsForEdit(id uint, locationType string, locationID uint) ([]dto.InvoiceWriteOffMaterialsForEdit, error) {
+func (u *invoiceWriteOffUsecase) GetMaterialsForEdit(id uint, locationType string, locationID, projectID uint) ([]dto.InvoiceWriteOffMaterialsForEdit, error) {
 	rows, err := u.q.ListInvoiceWriteOffMaterialsForEdit(context.Background(), db.ListInvoiceWriteOffMaterialsForEditParams{
 		InvoiceID:    pgInt8(id),
 		LocationType: pgText(locationType),
 		LocationID:   pgInt8(locationID),
+		ProjectID:    pgInt8(projectID),
 	})
 	if err != nil {
 		return []dto.InvoiceWriteOffMaterialsForEdit{}, nil

@@ -136,7 +136,13 @@ LEFT JOIN districts ON districts.id = invoice_objects.district_id
 INNER JOIN objects ON objects.id = invoice_objects.object_id
 INNER JOIN teams ON teams.id = invoice_objects.team_id
 WHERE invoice_objects.id = $1
+  AND invoice_objects.project_id = $2
 `
+
+type GetInvoiceObjectDescriptiveDataByIDParams struct {
+	ID        int64       `json:"id"`
+	ProjectID pgtype.Int8 `json:"project_id"`
+}
 
 type GetInvoiceObjectDescriptiveDataByIDRow struct {
 	ID                  int64              `json:"id"`
@@ -151,8 +157,8 @@ type GetInvoiceObjectDescriptiveDataByIDRow struct {
 	ConfirmedByOperator bool               `json:"confirmed_by_operator"`
 }
 
-func (q *Queries) GetInvoiceObjectDescriptiveDataByID(ctx context.Context, id int64) (GetInvoiceObjectDescriptiveDataByIDRow, error) {
-	row := q.db.QueryRow(ctx, getInvoiceObjectDescriptiveDataByID, id)
+func (q *Queries) GetInvoiceObjectDescriptiveDataByID(ctx context.Context, arg GetInvoiceObjectDescriptiveDataByIDParams) (GetInvoiceObjectDescriptiveDataByIDRow, error) {
+	row := q.db.QueryRow(ctx, getInvoiceObjectDescriptiveDataByID, arg.ID, arg.ProjectID)
 	var i GetInvoiceObjectDescriptiveDataByIDRow
 	err := row.Scan(
 		&i.ID,

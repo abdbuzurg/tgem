@@ -125,11 +125,17 @@ SELECT id, project_id, delivery_code, released_worker_id, name_of_project,
        date_of_invoice, notes, confirmation
 FROM invoice_output_out_of_projects
 WHERE delivery_code = $1
+  AND project_id = $2
 LIMIT 1
 `
 
-func (q *Queries) GetInvoiceOutputOutOfProjectByDeliveryCode(ctx context.Context, deliveryCode pgtype.Text) (InvoiceOutputOutOfProject, error) {
-	row := q.db.QueryRow(ctx, getInvoiceOutputOutOfProjectByDeliveryCode, deliveryCode)
+type GetInvoiceOutputOutOfProjectByDeliveryCodeParams struct {
+	DeliveryCode pgtype.Text `json:"delivery_code"`
+	ProjectID    pgtype.Int8 `json:"project_id"`
+}
+
+func (q *Queries) GetInvoiceOutputOutOfProjectByDeliveryCode(ctx context.Context, arg GetInvoiceOutputOutOfProjectByDeliveryCodeParams) (InvoiceOutputOutOfProject, error) {
+	row := q.db.QueryRow(ctx, getInvoiceOutputOutOfProjectByDeliveryCode, arg.DeliveryCode, arg.ProjectID)
 	var i InvoiceOutputOutOfProject
 	err := row.Scan(
 		&i.ID,
@@ -161,8 +167,14 @@ WHERE
     material_locations.location_type = 'warehouse'
     AND invoice_materials.invoice_type = 'output-out-of-project'
     AND invoice_materials.invoice_id = $1
+    AND invoice_materials.project_id = $2
 ORDER BY materials.id
 `
+
+type ListInvoiceOutputOutOfProjectMaterialsForEditParams struct {
+	InvoiceID pgtype.Int8 `json:"invoice_id"`
+	ProjectID pgtype.Int8 `json:"project_id"`
+}
 
 type ListInvoiceOutputOutOfProjectMaterialsForEditRow struct {
 	MaterialID      int64          `json:"material_id"`
@@ -174,8 +186,8 @@ type ListInvoiceOutputOutOfProjectMaterialsForEditRow struct {
 	HasSerialNumber bool           `json:"has_serial_number"`
 }
 
-func (q *Queries) ListInvoiceOutputOutOfProjectMaterialsForEdit(ctx context.Context, invoiceID pgtype.Int8) ([]ListInvoiceOutputOutOfProjectMaterialsForEditRow, error) {
-	rows, err := q.db.Query(ctx, listInvoiceOutputOutOfProjectMaterialsForEdit, invoiceID)
+func (q *Queries) ListInvoiceOutputOutOfProjectMaterialsForEdit(ctx context.Context, arg ListInvoiceOutputOutOfProjectMaterialsForEditParams) ([]ListInvoiceOutputOutOfProjectMaterialsForEditRow, error) {
+	rows, err := q.db.Query(ctx, listInvoiceOutputOutOfProjectMaterialsForEdit, arg.InvoiceID, arg.ProjectID)
 	if err != nil {
 		return nil, err
 	}

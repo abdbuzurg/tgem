@@ -25,3 +25,4 @@ Thumbs.db
 
 # Claude / AI agent artifacts at this level
 .claude/
+tgem-legacy/

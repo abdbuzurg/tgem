@@ -52,9 +52,21 @@ services:
 
     # Excel import/export working dirs and the (legacy) Files.Path target.
     # Named volumes survive container restarts.
+    #
+    # The third entry is a read-only bind-mount of the legacy backend's
+    # pkg/excels/ directory on the production host. The rewrite's
+    # invoice-document handlers fall back to /app/legacy_excels when a
+    # requested file is missing from the named volume — see
+    # MIGRATION/06-xlsx-investigation.md. The :? form makes compose abort
+    # at startup if TGEM_LEGACY_EXCELS_PATH is unset (loud failure beats
+    # silent empty mount). :ro is load-bearing: the rewrite must never
+    # write into the legacy directory. TGEM_LEGACY_EXCELS_PATH is read
+    # from the SHELL ENVIRONMENT or a project-root `.env` — NOT from
+    # `.env.backend` above (env_file: only feeds the container).
     volumes:
       - backend_storage:/app/storage
       - backend_files:/app/files
+      - ${TGEM_LEGACY_EXCELS_PATH:?must be set — point at the legacy backend's pkg/excels host directory}:/app/legacy_excels:ro
 
     networks:
       - tgem

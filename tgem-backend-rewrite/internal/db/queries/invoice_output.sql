@@ -22,6 +22,7 @@ SELECT id, district_id, project_id, warehouse_manager_worker_id, released_worker
        recipient_worker_id, team_id, delivery_code, date_of_invoice, notes, confirmation
 FROM invoice_outputs
 WHERE delivery_code = $1
+  AND project_id = $2
 LIMIT 1;
 
 -- name: CreateInvoiceOutput :one
@@ -194,7 +195,8 @@ INNER JOIN material_locations ON material_locations.material_cost_id = invoice_m
 WHERE
     material_locations.location_type = 'warehouse'
     AND invoice_materials.invoice_type = 'output'
-    AND invoice_materials.invoice_id = $1;
+    AND invoice_materials.invoice_id = $1
+    AND invoice_materials.project_id = $2;
 
 -- name: ListInvoiceOutputMaterialDataForReport :many
 SELECT

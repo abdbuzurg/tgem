@@ -35,8 +35,8 @@ type IInvoiceInputUsecase interface {
 	GetAll() ([]model.InvoiceInput, error)
 	GetPaginated(page, limit int, filter dto.InvoiceInputSearchParameters) ([]dto.InvoiceInputPaginated, error)
 	GetByID(id uint) (model.InvoiceInput, error)
-	GetInvoiceMaterialsWithoutSerialNumbers(id uint) ([]dto.InvoiceMaterialsWithoutSerialNumberView, error)
-	GetInvoiceMaterialsWithSerialNumbers(id uint) ([]dto.InvoiceMaterialsWithSerialNumberView, error)
+	GetInvoiceMaterialsWithoutSerialNumbers(id, projectID uint) ([]dto.InvoiceMaterialsWithoutSerialNumberView, error)
+	GetInvoiceMaterialsWithSerialNumbers(id, projectID uint) ([]dto.InvoiceMaterialsWithSerialNumberView, error)
 	Create(data dto.InvoiceInput) (model.InvoiceInput, error)
 	Update(data dto.InvoiceInput) (model.InvoiceInput, error)
 	Delete(id uint) error
@@ -48,7 +48,7 @@ type IInvoiceInputUsecase interface {
 	Report(filter dto.InvoiceInputReportFilterRequest) (string, error)
 	NewMaterialCost(data model.MaterialCost) error
 	NewMaterialAndItsCost(data dto.NewMaterialDataFromInvoiceInput) error
-	GetMaterialsForEdit(id uint) ([]dto.InvoiceInputMaterialForEdit, error)
+	GetMaterialsForEdit(id, projectID uint) ([]dto.InvoiceInputMaterialForEdit, error)
 	Import(filePath string, projectID uint, workerID uint) error
 	GetParametersForSearch(projectID uint) (dto.InvoiceInputParametersForSearch, error)
 }
@@ -138,10 +138,11 @@ func (u *invoiceInputUsecase) GetByID(id uint) (model.InvoiceInput, error) {
 	return toModelInvoiceInput(row), nil
 }
 
-func (u *invoiceInputUsecase) GetInvoiceMaterialsWithoutSerialNumbers(id uint) ([]dto.InvoiceMaterialsWithoutSerialNumberView, error) {
+func (u *invoiceInputUsecase) GetInvoiceMaterialsWithoutSerialNumbers(id, projectID uint) ([]dto.InvoiceMaterialsWithoutSerialNumberView, error) {
 	rows, err := u.q.ListInvoiceMaterialsWithoutSerialNumbers(context.Background(), db.ListInvoiceMaterialsWithoutSerialNumbersParams{
 		InvoiceType: pgText("input"),
 		InvoiceID:   pgInt8(id),
+		ProjectID:   pgInt8(projectID),
 	})
 	if err != nil {
 		return nil, err
@@ -161,10 +162,11 @@ func (u *invoiceInputUsecase) GetInvoiceMaterialsWithoutSerialNumbers(id uint) (
 	return out, nil
 }
 
-func (u *invoiceInputUsecase) GetInvoiceMaterialsWithSerialNumbers(id uint) ([]dto.InvoiceMaterialsWithSerialNumberView, error) {
+func (u *invoiceInputUsecase) GetInvoiceMaterialsWithSerialNumbers(id, projectID uint) ([]dto.InvoiceMaterialsWithSerialNumberView, error) {
 	rows, err := u.q.ListInvoiceMaterialsWithSerialNumbers(context.Background(), db.ListInvoiceMaterialsWithSerialNumbersParams{
 		InvoiceType: pgText("input"),
 		InvoiceID:   pgInt8(id),
+		ProjectID:   pgInt8(projectID),
 	})
 	if err != nil {
 		return nil, err
@@ -682,8 +684,11 @@ func (u *invoiceInputUsecase) NewMaterialAndItsCost(data dto.NewMaterialDataFrom
 	return tx.Commit(ctx)
 }
 
-func (u *invoiceInputUsecase) GetMaterialsForEdit(id uint) ([]dto.InvoiceInputMaterialForEdit, error) {
-	rows, err := u.q.ListInvoiceInputMaterialsForEdit(context.Background(), pgInt8(id))
+func (u *invoiceInputUsecase) GetMaterialsForEdit(id, projectID uint) ([]dto.InvoiceInputMaterialForEdit, error) {
+	rows, err := u.q.ListInvoiceInputMaterialsForEdit(context.Background(), db.ListInvoiceInputMaterialsForEditParams{
+		InvoiceID: pgInt8(id),
+		ProjectID: pgInt8(projectID),
+	})
 	if err != nil {
 		return nil, err
 	}

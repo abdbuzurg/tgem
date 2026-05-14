@@ -103,7 +103,9 @@ func (handler *invoiceOutputHandler) GetInvoiceMaterialsWithoutSerialNumbers(c *
 		return
 	}
 
-	data, err := handler.invoiceOutputUsecase.GetInvoiceMaterialsWithoutSerialNumbers(uint(id))
+	projectID := c.GetUint("projectID")
+
+	data, err := handler.invoiceOutputUsecase.GetInvoiceMaterialsWithoutSerialNumbers(uint(id), projectID)
 	if err != nil {
 		response.ResponseError(c, fmt.Sprintf("Внутренняя ошибка сервера: %v", err))
 		return
@@ -121,7 +123,9 @@ func (handler *invoiceOutputHandler) GetInvoiceMaterialsWithSerialNumbers(c *gin
 		return
 	}
 
-	data, err := handler.invoiceOutputUsecase.GetInvoiceMaterialsWithSerialNumbers(uint(id))
+	projectID := c.GetUint("projectID")
+
+	data, err := handler.invoiceOutputUsecase.GetInvoiceMaterialsWithSerialNumbers(uint(id), projectID)
 	if err != nil {
 		response.ResponseError(c, fmt.Sprintf("Внутренняя ошибка сервера: %v", err))
 		return
@@ -160,6 +164,17 @@ func (handler *invoiceOutputHandler) Delete(c *gin.Context) {
 		return
 	}
 
+	projectID := c.GetUint("projectID")
+	existing, err := handler.invoiceOutputUsecase.GetByID(uint(id))
+	if err != nil {
+		response.ResponseError(c, fmt.Sprintf("Не удалось найти накладную: %v", err))
+		return
+	}
+	if existing.ProjectID != projectID {
+		response.ResponseError(c, "Доступ запрещен: накладная принадлежит другому проекту")
+		return
+	}
+
 	err = handler.invoiceOutputUsecase.Delete(uint(id))
 	if err != nil {
 		response.ResponseError(c, fmt.Sprintf("Could not perform the deletion of Invoice: %v", err))
@@ -177,9 +192,15 @@ func (handler *invoiceOutputHandler) Confirmation(c *gin.Context) {
 		return
 	}
 
+	projectID := c.GetUint("projectID")
 	invoiceOutput, err := handler.invoiceOutputUsecase.GetByID(uint(id))
 	if err != nil {
 		response.ResponseError(c, fmt.Sprintf("Cannot find invoice Output by id %v: %v", id, err))
+		return
+	}
+	if invoiceOutput.ProjectID != projectID {
+		response.ResponseError(c, "Доступ запрещен: накладная принадлежит другому проекту")
+		return
 	}
 
 	file, err := c.FormFile("file")
@@ -218,12 +239,17 @@ func (handler *invoiceOutputHandler) Confirmation(c *gin.Context) {
 
 func (handler *invoiceOutputHandler) GetDocument(c *gin.Context) {
 	deliveryCode := c.Param("deliveryCode")
-	extension, err := handler.invoiceOutputUsecase.GetDocument(deliveryCode)
+	projectID := c.GetUint("projectID")
+	extension, err := handler.invoiceOutputUsecase.GetDocument(deliveryCode, projectID)
 	if err != nil {
 		response.ResponseError(c, fmt.Sprintf("Internal server error: %v", err))
 		return
 	}
-	filePath := filepath.Join("./storage/import_excel/output/", deliveryCode+extension)
+	filePath, _ := resolveInvoiceDoc(deliveryCode, extension, "./storage/import_excel/output", "output")
+	if filePath == "" {
+		response.ResponseError(c, "Внутренняя ошибка сервера: Файл не существует")
+		return
+	}
 	c.FileAttachment(filePath, deliveryCode+extension)
 }
 
@@ -363,7 +389,9 @@ func (handler *invoiceOutputHandler) GetMaterialsForEdit(c *gin.Context) {
 	idRaw := c.Param("id")
 	id, err := strconv.ParseUint(idRaw, 10, 64)
 
-	result, err := handler.invoiceOutputUsecase.GetMaterialsForEdit(uint(id))
+	projectID := c.GetUint("projectID")
+
+	result, err := handler.invoiceOutputUsecase.GetMaterialsForEdit(uint(id), projectID)
 	if err != nil {
 		response.ResponseError(c, fmt.Sprintf("Внутренняя ошибка сервера: %v", err))
 		return
@@ -384,6 +412,16 @@ func (handler *invoiceOutputHandler) Update(c *gin.Context) {
 
 	projectID := c.GetUint("projectID")
 	updateData.Details.ProjectID = projectID
+
+	existing, err := handler.invoiceOutputUsecase.GetByID(updateData.Details.ID)
+	if err != nil {
+		response.ResponseError(c, fmt.Sprintf("Не удалось найти накладную: %v", err))
+		return
+	}
+	if existing.ProjectID != projectID {
+		response.ResponseError(c, "Доступ запрещен: накладная принадлежит другому проекту")
+		return
+	}
 
 	data, err := handler.invoiceOutputUsecase.Update(updateData)
 	if err != nil {

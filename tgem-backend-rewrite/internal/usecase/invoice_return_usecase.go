@@ -35,7 +35,7 @@ type IInvoiceReturnUsecase interface {
 	GetByID(id uint) (model.InvoiceReturn, error)
 	GetPaginatedTeam(page, limit int, projectID uint) ([]dto.InvoiceReturnTeamPaginatedQueryData, error)
 	GetPaginatedObject(page, limit int, projectID uint) ([]dto.InvoiceReturnObjectPaginated, error)
-	GetDocument(deliveryCode string) (string, error)
+	GetDocument(deliveryCode string, projectID uint) (string, error)
 	Create(data dto.InvoiceReturn) (model.InvoiceReturn, error)
 	Update(data dto.InvoiceReturn) (model.InvoiceReturn, error)
 	Delete(id uint) error
@@ -49,9 +49,9 @@ type IInvoiceReturnUsecase interface {
 	GetMaterialCostInLocation(projectID, locationID, materialID uint, locationType string) ([]model.MaterialCost, error)
 	GetMaterialAmountInLocation(projectID, locationID, materialCostID uint, locationType string) (float64, error)
 	GetSerialNumberCodesInLocation(projectID, materialID uint, locationType string, locationID uint) ([]string, error)
-	GetInvoiceMaterialsWithoutSerialNumbers(id uint) ([]dto.InvoiceMaterialsWithoutSerialNumberView, error)
-	GetInvoiceMaterialsWithSerialNumbers(id uint) ([]dto.InvoiceMaterialsWithSerialNumberView, error)
-	GetMaterialsForEdit(id uint, locationType string, locationID uint) ([]dto.InvoiceReturnMaterialForEdit, error)
+	GetInvoiceMaterialsWithoutSerialNumbers(id, projectID uint) ([]dto.InvoiceMaterialsWithoutSerialNumberView, error)
+	GetInvoiceMaterialsWithSerialNumbers(id, projectID uint) ([]dto.InvoiceMaterialsWithSerialNumberView, error)
+	GetMaterialsForEdit(id uint, locationType string, locationID, projectID uint) ([]dto.InvoiceReturnMaterialForEdit, error)
 	GetMaterialAmountByMaterialID(projectID, materialID, locationID uint, locationType string) (float64, error)
 }
 
@@ -895,10 +895,11 @@ func (u *invoiceReturnUsecase) GetSerialNumberCodesInLocation(projectID, materia
 	})
 }
 
-func (u *invoiceReturnUsecase) GetInvoiceMaterialsWithoutSerialNumbers(id uint) ([]dto.InvoiceMaterialsWithoutSerialNumberView, error) {
+func (u *invoiceReturnUsecase) GetInvoiceMaterialsWithoutSerialNumbers(id, projectID uint) ([]dto.InvoiceMaterialsWithoutSerialNumberView, error) {
 	rows, err := u.q.ListInvoiceMaterialsWithoutSerialNumbers(context.Background(), db.ListInvoiceMaterialsWithoutSerialNumbersParams{
 		InvoiceType: pgText("return"),
 		InvoiceID:   pgInt8(id),
+		ProjectID:   pgInt8(projectID),
 	})
 	if err != nil {
 		return nil, err
@@ -918,10 +919,11 @@ func (u *invoiceReturnUsecase) GetInvoiceMaterialsWithoutSerialNumbers(id uint) 
 	return out, nil
 }
 
-func (u *invoiceReturnUsecase) GetInvoiceMaterialsWithSerialNumbers(id uint) ([]dto.InvoiceMaterialsWithSerialNumberView, error) {
+func (u *invoiceReturnUsecase) GetInvoiceMaterialsWithSerialNumbers(id, projectID uint) ([]dto.InvoiceMaterialsWithSerialNumberView, error) {
 	rows, err := u.q.ListInvoiceMaterialsWithSerialNumbers(context.Background(), db.ListInvoiceMaterialsWithSerialNumbersParams{
 		InvoiceType: pgText("return"),
 		InvoiceID:   pgInt8(id),
+		ProjectID:   pgInt8(projectID),
 	})
 	if err != nil {
 		return nil, err
@@ -988,11 +990,12 @@ func (u *invoiceReturnUsecase) GetInvoiceMaterialsWithSerialNumbers(id uint) ([]
 	return result, nil
 }
 
-func (u *invoiceReturnUsecase) GetMaterialsForEdit(id uint, locationType string, locationID uint) ([]dto.InvoiceReturnMaterialForEdit, error) {
+func (u *invoiceReturnUsecase) GetMaterialsForEdit(id uint, locationType string, locationID, projectID uint) ([]dto.InvoiceReturnMaterialForEdit, error) {
 	rows, err := u.q.ListInvoiceReturnMaterialsForEdit(context.Background(), db.ListInvoiceReturnMaterialsForEditParams{
 		InvoiceID:    pgInt8(id),
 		LocationType: pgText(locationType),
 		LocationID:   pgInt8(locationID),
+		ProjectID:    pgInt8(projectID),
 	})
 	if err != nil {
 		return []dto.InvoiceReturnMaterialForEdit{}, nil
@@ -1194,8 +1197,11 @@ func (u *invoiceReturnUsecase) GenerateExcel(data dto.InvoiceReturn) error {
 	return nil
 }
 
-func (u *invoiceReturnUsecase) GetDocument(deliveryCode string) (string, error) {
-	invoice, err := u.q.GetInvoiceReturnByDeliveryCode(context.Background(), pgText(deliveryCode))
+func (u *invoiceReturnUsecase) GetDocument(deliveryCode string, projectID uint) (string, error) {
+	invoice, err := u.q.GetInvoiceReturnByDeliveryCode(context.Background(), db.GetInvoiceReturnByDeliveryCodeParams{
+		DeliveryCode: pgText(deliveryCode),
+		ProjectID:    pgInt8(projectID),
+	})
 	if err != nil {
 		return "", err
 	}

@@ -357,6 +357,10 @@ type SerialNumberMovement struct {
 	Confirmation   pgtype.Bool `json:"confirmation"`
 }
 
+type SoonToBeDeletedObject struct {
+	ID int64 `json:"id"`
+}
+
 type StvtObject struct {
 	ID            int64       `json:"id"`
 	VoltageClass  pgtype.Text `json:"voltage_class"`

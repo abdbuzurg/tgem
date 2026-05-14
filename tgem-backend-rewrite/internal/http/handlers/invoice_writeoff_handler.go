@@ -108,8 +108,19 @@ func (handler *invoiceWriteOffHandler) Update(c *gin.Context) {
 		return
 	}
 
-	updateData.Details.ProjectID = c.GetUint("projectID")
+	projectID := c.GetUint("projectID")
+	updateData.Details.ProjectID = projectID
 	updateData.Details.ReleasedWorkerID = c.GetUint("workerID")
+
+	existing, err := handler.invoiceWriteOffUsecase.GetByID(updateData.Details.ID)
+	if err != nil {
+		response.ResponseError(c, fmt.Sprintf("Не удалось найти накладную: %v", err))
+		return
+	}
+	if existing.ProjectID != projectID {
+		response.ResponseError(c, "Доступ запрещен: накладная принадлежит другому проекту")
+		return
+	}
 
 	data, err := handler.invoiceWriteOffUsecase.Update(updateData)
 	if err != nil {
@@ -125,6 +136,17 @@ func (handler *invoiceWriteOffHandler) Delete(c *gin.Context) {
 	id, err := strconv.ParseUint(idRaw, 10, 64)
 	if err != nil {
 		response.ResponseError(c, fmt.Sprintf("Incorrect parameter provided: %v", err))
+		return
+	}
+
+	projectID := c.GetUint("projectID")
+	existing, err := handler.invoiceWriteOffUsecase.GetByID(uint(id))
+	if err != nil {
+		response.ResponseError(c, fmt.Sprintf("Не удалось найти накладную: %v", err))
+		return
+	}
+	if existing.ProjectID != projectID {
+		response.ResponseError(c, "Доступ запрещен: накладная принадлежит другому проекту")
 		return
 	}
 
@@ -151,7 +173,9 @@ func (handler *invoiceWriteOffHandler) GetInvoiceMaterialsWithoutSerialNumber(c 
 		return
 	}
 
-	data, err := handler.invoiceWriteOffUsecase.GetInvoiceMaterialsWithoutSerialNumbers(uint(id))
+	projectID := c.GetUint("projectID")
+
+	data, err := handler.invoiceWriteOffUsecase.GetInvoiceMaterialsWithoutSerialNumbers(uint(id), projectID)
 	if err != nil {
 		response.ResponseError(c, fmt.Sprintf("Внутренняя ошибка сервера: %v", err))
 		return
@@ -174,7 +198,9 @@ func (handler *invoiceWriteOffHandler) GetMaterialsForEdit(c *gin.Context) {
 
 	locationType := c.Param("locationType")
 
-	result, err := handler.invoiceWriteOffUsecase.GetMaterialsForEdit(uint(id), locationType, uint(locationID))
+	projectID := c.GetUint("projectID")
+
+	result, err := handler.invoiceWriteOffUsecase.GetMaterialsForEdit(uint(id), locationType, uint(locationID), projectID)
 	if err != nil {
 		response.ResponseError(c, fmt.Sprintf("Внутренняя ошибка сервера: %v", err))
 		return
@@ -197,6 +223,10 @@ func (handler *invoiceWriteOffHandler) Confirmation(c *gin.Context) {
 	invoiceWriteOff, err := handler.invoiceWriteOffUsecase.GetByID(uint(id))
 	if err != nil {
 		response.ResponseError(c, fmt.Sprintf("Внутренняя ошибка сервера: %v", err))
+		return
+	}
+	if invoiceWriteOff.ProjectID != projectID {
+		response.ResponseError(c, "Доступ запрещен: накладная принадлежит другому проекту")
 		return
 	}
 
@@ -231,20 +261,14 @@ func (handler *invoiceWriteOffHandler) Confirmation(c *gin.Context) {
 }
 
 func (handler *invoiceWriteOffHandler) GetDocument(c *gin.Context) {
-
 	deliveryCode := c.Param("deliveryCode")
-
-	filePath := filepath.Join("./storage/import_excel/writeoff/", deliveryCode)
-	fileGlob, err := filepath.Glob(filePath + ".*")
-	if err != nil {
-		response.ResponseError(c, fmt.Sprintf("Внутренняя ошибка сервера: %v", err))
+	filePath, _ := resolveInvoiceDocGlob(deliveryCode, "./storage/import_excel/writeoff", "writeoff")
+	if filePath == "" {
+		response.ResponseError(c, "Внутренняя ошибка сервера: Файл не существует")
 		return
 	}
-
-	filePath = fileGlob[0]
 	pathSeparated := strings.Split(filePath, ".")
 	deliveryCodeExtension := pathSeparated[len(pathSeparated)-1]
-
 	c.FileAttachment(filePath, deliveryCode+"."+deliveryCodeExtension)
 }
 

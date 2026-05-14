@@ -115,6 +115,17 @@ func (handler *invoiceOutputOutOfProjectHandler) Delete(c *gin.Context) {
 		return
 	}
 
+	projectID := c.GetUint("projectID")
+	existing, err := handler.invoiceOutputOutOfProjectUsecase.GetByID(uint(id))
+	if err != nil {
+		response.ResponseError(c, fmt.Sprintf("Не удалось найти накладную: %v", err))
+		return
+	}
+	if existing.ProjectID != projectID {
+		response.ResponseError(c, "Доступ запрещен: накладная принадлежит другому проекту")
+		return
+	}
+
 	err = handler.invoiceOutputOutOfProjectUsecase.Delete(uint(id))
 	if err != nil {
 		response.ResponseError(c, fmt.Sprintf("Could not perform the deletion of Invoice: %v", err))
@@ -133,7 +144,9 @@ func (handler *invoiceOutputOutOfProjectHandler) GetInvoiceMaterialsWithoutSeria
 		return
 	}
 
-	data, err := handler.invoiceOutputOutOfProjectUsecase.GetInvoiceMaterialsWithoutSerialNumbers(uint(id))
+	projectID := c.GetUint("projectID")
+
+	data, err := handler.invoiceOutputOutOfProjectUsecase.GetInvoiceMaterialsWithoutSerialNumbers(uint(id), projectID)
 	if err != nil {
 		response.ResponseError(c, fmt.Sprintf("Внутренняя ошибка сервера: %v", err))
 		return
@@ -151,7 +164,9 @@ func (handler *invoiceOutputOutOfProjectHandler) GetInvoiceMaterialsWithSerialNu
 		return
 	}
 
-	data, err := handler.invoiceOutputOutOfProjectUsecase.GetInvoiceMaterialsWithSerialNumbers(uint(id))
+	projectID := c.GetUint("projectID")
+
+	data, err := handler.invoiceOutputOutOfProjectUsecase.GetInvoiceMaterialsWithSerialNumbers(uint(id), projectID)
 	if err != nil {
 		response.ResponseError(c, fmt.Sprintf("Внутренняя ошибка сервера: %v", err))
 		return
@@ -173,6 +188,16 @@ func (handler *invoiceOutputOutOfProjectHandler) Update(c *gin.Context) {
 	projectID := c.GetUint("projectID")
 	updateData.Details.ProjectID = projectID
 
+	existing, err := handler.invoiceOutputOutOfProjectUsecase.GetByID(updateData.Details.ID)
+	if err != nil {
+		response.ResponseError(c, fmt.Sprintf("Не удалось найти накладную: %v", err))
+		return
+	}
+	if existing.ProjectID != projectID {
+		response.ResponseError(c, "Доступ запрещен: накладная принадлежит другому проекту")
+		return
+	}
+
 	data, err := handler.invoiceOutputOutOfProjectUsecase.Update(updateData)
 	if err != nil {
 		response.ResponseError(c, fmt.Sprintf("Could perform the creation of Invoice: %v", err))
@@ -190,9 +215,14 @@ func (handler *invoiceOutputOutOfProjectHandler) Confirmation(c *gin.Context) {
 		return
 	}
 
+	projectID := c.GetUint("projectID")
 	invoiceOutputOutOfProject, err := handler.invoiceOutputOutOfProjectUsecase.GetByID(uint(id))
 	if err != nil {
 		response.ResponseError(c, fmt.Sprintf("Cannot find invoice Output by id %v: %v", id, err))
+		return
+	}
+	if invoiceOutputOutOfProject.ProjectID != projectID {
+		response.ResponseError(c, "Доступ запрещен: накладная принадлежит другому проекту")
 		return
 	}
 
@@ -233,7 +263,9 @@ func (handler *invoiceOutputOutOfProjectHandler) GetMaterialsForEdit(c *gin.Cont
 	idRaw := c.Param("id")
 	id, err := strconv.ParseUint(idRaw, 10, 64)
 
-	result, err := handler.invoiceOutputOutOfProjectUsecase.GetMaterialsForEdit(uint(id))
+	projectID := c.GetUint("projectID")
+
+	result, err := handler.invoiceOutputOutOfProjectUsecase.GetMaterialsForEdit(uint(id), projectID)
 	if err != nil {
 		response.ResponseError(c, fmt.Sprintf("Внутренняя ошибка сервера: %v", err))
 		return
@@ -274,13 +306,18 @@ func (handler *invoiceOutputOutOfProjectHandler) Report(c *gin.Context) {
 
 func (handler *invoiceOutputOutOfProjectHandler) GetDocument(c *gin.Context) {
 	deliveryCode := c.Param("deliveryCode")
+	projectID := c.GetUint("projectID")
 
-  extension, err := handler.invoiceOutputOutOfProjectUsecase.GetDocument(deliveryCode)
+  extension, err := handler.invoiceOutputOutOfProjectUsecase.GetDocument(deliveryCode, projectID)
 	if err != nil {
 		response.ResponseError(c, fmt.Sprintf("Internal server error: %v", err))
 		return
 	}
 
-	filePath := filepath.Join("./storage/import_excel/output/", deliveryCode+extension)
+	filePath, _ := resolveInvoiceDoc(deliveryCode, extension, "./storage/import_excel/output", "output")
+	if filePath == "" {
+		response.ResponseError(c, "Внутренняя ошибка сервера: Файл не существует")
+		return
+	}
 	c.FileAttachment(filePath, deliveryCode+extension)
 }

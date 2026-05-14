@@ -9,6 +9,7 @@ SELECT id, project_id, delivery_code, released_worker_id, name_of_project,
        date_of_invoice, notes, confirmation
 FROM invoice_output_out_of_projects
 WHERE delivery_code = $1
+  AND project_id = $2
 LIMIT 1;
 
 -- name: ListInvoiceOutputOutOfProjectsPaginated :many
@@ -78,6 +79,7 @@ WHERE
     material_locations.location_type = 'warehouse'
     AND invoice_materials.invoice_type = 'output-out-of-project'
     AND invoice_materials.invoice_id = $1
+    AND invoice_materials.project_id = $2
 ORDER BY materials.id;
 
 -- name: ListInvoiceOutputOutOfProjectUniqueNameOfProjects :many

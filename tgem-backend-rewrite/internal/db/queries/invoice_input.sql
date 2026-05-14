@@ -187,7 +187,8 @@ INNER JOIN material_costs ON invoice_materials.material_cost_id = material_costs
 INNER JOIN materials ON material_costs.material_id = materials.id
 WHERE
     invoice_materials.invoice_type = 'input'
-    AND invoice_materials.invoice_id = $1;
+    AND invoice_materials.invoice_id = $1
+    AND invoice_materials.project_id = $2;
 
 -- name: ListInvoiceInputAllDeliveryCodes :many
 SELECT COALESCE(delivery_code, '')::text AS delivery_code

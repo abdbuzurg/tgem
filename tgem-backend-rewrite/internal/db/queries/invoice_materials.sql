@@ -32,6 +32,7 @@ INNER JOIN materials ON materials.id = material_costs.material_id
 WHERE
     invoice_materials.invoice_type = $1
     AND invoice_materials.invoice_id = $2
+    AND invoice_materials.project_id = $3
     AND COALESCE(materials.has_serial_number, false) = false
 ORDER BY materials.name DESC;
 
@@ -58,6 +59,7 @@ WHERE
     AND invoice_materials.is_defected = serial_number_movements.is_defected
     AND invoice_materials.invoice_type = $1
     AND invoice_materials.invoice_id = $2
+    AND invoice_materials.project_id = $3
     AND COALESCE(materials.has_serial_number, false) = true
 ORDER BY materials.name DESC;
 

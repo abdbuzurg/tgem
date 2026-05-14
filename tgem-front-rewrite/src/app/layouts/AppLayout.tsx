@@ -1,21 +1,13 @@
-import { Link, Outlet, useNavigate } from "react-router-dom"
+import { Link, Outlet } from "react-router-dom"
 import Button from "@shared/ui/Button"
-import toast, { Toaster } from "react-hot-toast"
+import { Toaster } from "react-hot-toast"
 import { useQuery } from "@tanstack/react-query"
-import { HOME, LOGIN, REFERENCE_BOOK, REPORT, STATISTICS } from "@routes/paths"
+import { HOME, REFERENCE_BOOK, REPORT, STATISTICS } from "@routes/paths"
 import { getProjectName } from "@entities/project/api"
+import useLogout from "@app/hooks/useLogout"
 
 export default function AppLayout() {
-  const navigate = useNavigate()
-
-  const logout = () => {
-    const loadingToast = toast.loading("Выход.....")
-    localStorage.removeItem("token")
-    localStorage.removeItem("username")
-    toast.dismiss(loadingToast)
-    toast.success("Операция успешна")
-    navigate(LOGIN)
-  }
+  const logout = useLogout()
 
   const projectNameQuery = useQuery<string, Error, string>({
     queryKey: ["project-name"],

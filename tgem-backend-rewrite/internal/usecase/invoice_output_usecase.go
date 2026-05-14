@@ -35,9 +35,9 @@ type IInvoiceOutputUsecase interface {
 	GetAll() ([]model.InvoiceOutput, error)
 	GetPaginated(page, limit int, data model.InvoiceOutput) ([]dto.InvoiceOutputPaginated, error)
 	GetByID(id uint) (model.InvoiceOutput, error)
-	GetDocument(deliveryCode string) (string, error)
-	GetInvoiceMaterialsWithoutSerialNumbers(id uint) ([]dto.InvoiceMaterialsWithoutSerialNumberView, error)
-	GetInvoiceMaterialsWithSerialNumbers(id uint) ([]dto.InvoiceMaterialsWithSerialNumberView, error)
+	GetDocument(deliveryCode string, projectID uint) (string, error)
+	GetInvoiceMaterialsWithoutSerialNumbers(id, projectID uint) ([]dto.InvoiceMaterialsWithoutSerialNumberView, error)
+	GetInvoiceMaterialsWithSerialNumbers(id, projectID uint) ([]dto.InvoiceMaterialsWithSerialNumberView, error)
 	Create(data dto.InvoiceOutput) (model.InvoiceOutput, error)
 	Update(data dto.InvoiceOutput) (model.InvoiceOutput, error)
 	Delete(id uint) error
@@ -52,7 +52,7 @@ type IInvoiceOutputUsecase interface {
 	GetTotalMaterialAmount(projectID, materialID uint) (float64, error)
 	GetSerialNumbersByMaterial(projectID, materialID uint) ([]string, error)
 	GetAvailableMaterialsInWarehouse(projectID uint) ([]dto.AvailableMaterialsInWarehouse, error)
-	GetMaterialsForEdit(id uint) ([]dto.InvoiceOutputMaterialsForEdit, error)
+	GetMaterialsForEdit(id, projectID uint) ([]dto.InvoiceOutputMaterialsForEdit, error)
 	Import(filePath string, projectID uint, workerID uint) error
 }
 
@@ -114,10 +114,11 @@ func (u *invoiceOutputUsecase) GetPaginated(page, limit int, data model.InvoiceO
 	return out, nil
 }
 
-func (u *invoiceOutputUsecase) GetInvoiceMaterialsWithoutSerialNumbers(id uint) ([]dto.InvoiceMaterialsWithoutSerialNumberView, error) {
+func (u *invoiceOutputUsecase) GetInvoiceMaterialsWithoutSerialNumbers(id, projectID uint) ([]dto.InvoiceMaterialsWithoutSerialNumberView, error) {
 	rows, err := u.q.ListInvoiceMaterialsWithoutSerialNumbers(context.Background(), db.ListInvoiceMaterialsWithoutSerialNumbersParams{
 		InvoiceType: pgText("output"),
 		InvoiceID:   pgInt8(id),
+		ProjectID:   pgInt8(projectID),
 	})
 	if err != nil {
 		return nil, err
@@ -137,10 +138,11 @@ func (u *invoiceOutputUsecase) GetInvoiceMaterialsWithoutSerialNumbers(id uint) 
 	return out, nil
 }
 
-func (u *invoiceOutputUsecase) GetInvoiceMaterialsWithSerialNumbers(id uint) ([]dto.InvoiceMaterialsWithSerialNumberView, error) {
+func (u *invoiceOutputUsecase) GetInvoiceMaterialsWithSerialNumbers(id, projectID uint) ([]dto.InvoiceMaterialsWithSerialNumberView, error) {
 	rows, err := u.q.ListInvoiceMaterialsWithSerialNumbers(context.Background(), db.ListInvoiceMaterialsWithSerialNumbersParams{
 		InvoiceType: pgText("output"),
 		InvoiceID:   pgInt8(id),
+		ProjectID:   pgInt8(projectID),
 	})
 	if err != nil {
 		return nil, err
@@ -861,8 +863,11 @@ func (u *invoiceOutputUsecase) GetAvailableMaterialsInWarehouse(projectID uint) 
 	return result, nil
 }
 
-func (u *invoiceOutputUsecase) GetMaterialsForEdit(id uint) ([]dto.InvoiceOutputMaterialsForEdit, error) {
-	rows, err := u.q.ListInvoiceOutputMaterialsForEdit(context.Background(), pgInt8(id))
+func (u *invoiceOutputUsecase) GetMaterialsForEdit(id, projectID uint) ([]dto.InvoiceOutputMaterialsForEdit, error) {
+	rows, err := u.q.ListInvoiceOutputMaterialsForEdit(context.Background(), db.ListInvoiceOutputMaterialsForEditParams{
+		InvoiceID: pgInt8(id),
+		ProjectID: pgInt8(projectID),
+	})
 	if err != nil {
 		return []dto.InvoiceOutputMaterialsForEdit{}, nil
 	}
@@ -1271,8 +1276,11 @@ func (u *invoiceOutputUsecase) GenerateExcelFile(data dto.InvoiceOutput) error {
 	return nil
 }
 
-func (u *invoiceOutputUsecase) GetDocument(deliveryCode string) (string, error) {
-	invoiceOutput, err := u.q.GetInvoiceOutputByDeliveryCode(context.Background(), pgText(deliveryCode))
+func (u *invoiceOutputUsecase) GetDocument(deliveryCode string, projectID uint) (string, error) {
+	invoiceOutput, err := u.q.GetInvoiceOutputByDeliveryCode(context.Background(), db.GetInvoiceOutputByDeliveryCodeParams{
+		DeliveryCode: pgText(deliveryCode),
+		ProjectID:    pgInt8(projectID),
+	})
 	if err != nil {
 		return "", err
 	}

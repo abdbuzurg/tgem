@@ -194,11 +194,17 @@ SELECT id, project_id, district_id, returner_type, returner_id,
        notes, delivery_code, confirmation
 FROM invoice_returns
 WHERE delivery_code = $1
+  AND project_id = $2
 LIMIT 1
 `
 
-func (q *Queries) GetInvoiceReturnByDeliveryCode(ctx context.Context, deliveryCode pgtype.Text) (InvoiceReturn, error) {
-	row := q.db.QueryRow(ctx, getInvoiceReturnByDeliveryCode, deliveryCode)
+type GetInvoiceReturnByDeliveryCodeParams struct {
+	DeliveryCode pgtype.Text `json:"delivery_code"`
+	ProjectID    pgtype.Int8 `json:"project_id"`
+}
+
+func (q *Queries) GetInvoiceReturnByDeliveryCode(ctx context.Context, arg GetInvoiceReturnByDeliveryCodeParams) (InvoiceReturn, error) {
+	row := q.db.QueryRow(ctx, getInvoiceReturnByDeliveryCode, arg.DeliveryCode, arg.ProjectID)
 	var i InvoiceReturn
 	err := row.Scan(
 		&i.ID,
@@ -250,6 +256,7 @@ WHERE
     AND invoice_materials.invoice_id = $1
     AND material_locations.location_type = $2
     AND material_locations.location_id = $3
+    AND invoice_materials.project_id = $4
 ORDER BY materials.id
 `
 
@@ -257,6 +264,7 @@ type ListInvoiceReturnMaterialsForEditParams struct {
 	InvoiceID    pgtype.Int8 `json:"invoice_id"`
 	LocationType pgtype.Text `json:"location_type"`
 	LocationID   pgtype.Int8 `json:"location_id"`
+	ProjectID    pgtype.Int8 `json:"project_id"`
 }
 
 type ListInvoiceReturnMaterialsForEditRow struct {
@@ -271,7 +279,12 @@ type ListInvoiceReturnMaterialsForEditRow struct {
 }
 
 func (q *Queries) ListInvoiceReturnMaterialsForEdit(ctx context.Context, arg ListInvoiceReturnMaterialsForEditParams) ([]ListInvoiceReturnMaterialsForEditRow, error) {
-	rows, err := q.db.Query(ctx, listInvoiceReturnMaterialsForEdit, arg.InvoiceID, arg.LocationType, arg.LocationID)
+	rows, err := q.db.Query(ctx, listInvoiceReturnMaterialsForEdit,
+		arg.InvoiceID,
+		arg.LocationType,
+		arg.LocationID,
+		arg.ProjectID,
+	)
 	if err != nil {
 		return nil, err
 	}

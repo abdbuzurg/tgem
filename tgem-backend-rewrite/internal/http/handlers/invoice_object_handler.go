@@ -41,7 +41,9 @@ func (handler *invoiceObjectHandler) GetInvoiceObjectDescriptiveDataByID(c *gin.
 		return
 	}
 
-	data, err := handler.invoiceObjectUsecase.GetInvoiceObjectDescriptiveDataByID(uint(id))
+	projectID := c.GetUint("projectID")
+
+	data, err := handler.invoiceObjectUsecase.GetInvoiceObjectDescriptiveDataByID(uint(id), projectID)
 	if err != nil {
 		response.ResponseError(c, fmt.Sprintf("Internal Server Error: %v", err))
 		return
@@ -88,6 +90,12 @@ func (handler *invoiceObjectHandler) Delete(c *gin.Context) {
 	id, err := strconv.ParseUint(idRaw, 10, 64)
 	if err != nil {
 		response.ResponseError(c, fmt.Sprintf("Incorrect parameter provided: %v", err))
+		return
+	}
+
+	projectID := c.GetUint("projectID")
+	if _, err := handler.invoiceObjectUsecase.GetInvoiceObjectDescriptiveDataByID(uint(id), projectID); err != nil {
+		response.ResponseError(c, fmt.Sprintf("Не удалось найти накладную: %v", err))
 		return
 	}
 
