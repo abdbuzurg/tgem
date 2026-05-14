@@ -1,0 +1,106 @@
+[
+  {
+    "resourceName": "администрирование пользователями",
+    "resourceURL": "/user"
+  },   
+  {
+    "resourceName": "администрирование действия пользователей",
+    "resourceURL": "/user-action"
+  }, 
+  {
+    "resourceName": "администрирование доступами пользователей в проекты",
+    "resourceURL": "/user-in-projects"
+  },
+  {
+    "resourceName": "Администрирование ролями",
+    "resourceURL": "/role"
+  },
+  {
+    "resourceName": "Администрирование доступами",
+    "resourceURL": "/permission"
+  },
+  {
+    "resourceName": "Справочник материалов",
+    "resourceURL": "/material"
+  },
+  {
+    "resourceName": "Справочник проектов",
+    "resourceURL": "/project"
+  },
+  {
+    "resourceName": "Справочник районов",
+    "resourceURL": "/district"
+  },
+  {
+    "resourceName": "Справочник сервисов",
+    "resourceURL": "/operation"
+  },
+  {
+    "resourceName": "Справочник объектов",
+    "resourceURL": "/object"
+  },
+  {
+    "resourceName": "Справочник бригад",
+    "resourceURL": "/team"
+  },
+  {
+    "resourceName": "Справочник сотрудников",
+    "resourceURL": "/worker"
+  },
+  {
+    "resourceName": "Справочник серийных номеров",
+    "resourceURL": "/serial-number"
+  },
+  {
+    "resourceName": "Накладная приход",
+    "resourceURL": "/input"
+  },
+  {
+    "resourceName": "Накладная отпуск",
+    "resourceURL": "/output"
+  },
+  {
+    "resourceName": "Накладная возврат",
+    "resourceURL": "/return"
+  },
+  {
+    "resourceName": "Накладная списание",
+    "resourceURL": "/write-off"
+  },
+  {
+    "resourceName": "Накладная объект",
+    "resourceURL": "/object"
+  },
+  {
+    "resourceName": "Корректировка оператора",
+    "resourceURL": "/invoice/correction"
+  },
+  {
+    "resourceName": "Местоположение метриала",
+    "resourceURL": "/material-location"
+  },
+  {
+    "resourceName": "Материала привязанные к накладной",
+    "resourceURL": "/invoice-materials"
+  },
+  {
+    "resourceName": "Бракованные материлы",
+    "resourceURL": "/material-defect"
+  },
+  {
+    "resourceName": "Корректировка оператора",
+    "resourceURL": "/invoie/correction"
+  },
+  {
+    "resourceName": "Корректировка оператора",
+    "resourceURL": "/invoie/correction"
+  },
+  {
+    "resourceName": "Корректировка оператора",
+    "resourceURL": "/invoie/correction"
+  },
+  {
+    "resourceName": "Ценники материалов",
+    "resourceURL": "/material-cost"
+  }
+]

@@ -1,0 +1,8 @@
+{
+  "id": "<ID>",
+  "name": "TP-GetByID",
+  "objectDetailedID": "<ID>",
+  "projectID": "<ID>",
+  "status": "active",
+  "type": "tp_objects"
+}

@@ -1,0 +1,27 @@
+# Repo-root gitignore.
+#
+# This repo root is NOT itself a git repository — each of the four trees
+# under it (_legacy/tgem-backend, _legacy/tgem-front, tgem-backend-rewrite,
+# tgem-front-rewrite) has its own .git. This .gitignore exists as a safety
+# net for whoever runs `git init` at the root later, and is referenced by
+# the runbook ("the .env.backend file must never be committed").
+
+# Backend environment file — contains the production DB password and JWT
+# secret. Filled out on the server from env.backend.example. NEVER commit.
+.env.backend
+.env.backend.*
+
+# Pre-migration backups taken by the runbook
+backups/
+
+# Local docker artifacts
+*.log
+
+# OS / editor
+.DS_Store
+Thumbs.db
+.vscode/
+.idea/
+
+# Claude / AI agent artifacts at this level
+.claude/

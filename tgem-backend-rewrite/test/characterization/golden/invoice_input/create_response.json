@@ -1,0 +1,10 @@
+{
+  "confirmation": false,
+  "dateOfInvoice": "<TIMESTAMP>",
+  "deliveryCode": "<DELIVERY_CODE>",
+  "id": "<ID>",
+  "notes": "char input",
+  "projectID": "<ID>",
+  "releasedWorkerID": "<ID>",
+  "warehouseManagerWorkerID": "<ID>"
+}

@@ -1,0 +1,1 @@
+export const ENTRY_LIMIT = 25

@@ -1,0 +1,31 @@
+# Build output
+./backend-v2
+./nohup.out
+
+# Claude / AI agent artifacts
+CLAUDE.md
+AGENTS.md
+PROGRESS.md
+.claude/
+.cursor/
+
+# Go test & coverage leftovers
+*.test
+*.out
+coverage.out
+
+# Editor / IDE
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Local env files
+.env
+.env.local
+.env.*.local

@@ -1,0 +1,47 @@
+# Keep the build context small and reproducible.
+
+# Version control
+.git
+.gitignore
+
+# AI / editor artifacts
+.claude/
+.cursor/
+.vscode/
+.idea/
+CLAUDE.md
+AGENTS.md
+PROGRESS.md
+
+# Test fixtures and golden files — not needed at build time
+test/
+
+# Generated dump tooling
+cmd/dump_baseline_schema/
+
+# Test outputs
+*.test
+*.out
+coverage.out
+
+# Local development env
+.env
+.env.local
+.env.*.local
+nohup.out
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Documentation
+docs/
+README.md
+
+# Excel lock files left behind by Office. The literal '~$' prefix is the
+# Office convention. The matching one in internal/templates/ confuses
+# excelize at runtime if accidentally loaded.
+internal/templates/~$*
+
+# Storage is a runtime working dir; the image creates it empty.
+storage/

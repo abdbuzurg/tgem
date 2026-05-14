@@ -1,0 +1,110 @@
+# Host nginx — replacement server block for after cutover.
+#
+# ===========================================================================
+# IMPORTANT: this is NOT a drop-in replacement for the entire live site
+# file. Your live config at /etc/nginx/sites-available/<file> almost
+# certainly contains TLS directives added by certbot (ssl_certificate,
+# ssl_certificate_key, listen 443 ssl http2, ssl_protocols, ssl_ciphers,
+# ssl_session_cache, ssl_session_timeout, add_header Strict-Transport-
+# Security, etc.) that are NOT shown here because they are environment-
+# specific and were never visible to the migration planner.
+#
+# Splice the two `location` blocks below into your existing server block
+# rather than overwriting the whole file. The runbook (MIGRATION/03-
+# runbook.md §3.7) prescribes exactly that.
+# ===========================================================================
+#
+# Changes vs. the legacy block:
+#   1. `location /` no longer serves /var/www/dist directly. It proxies to
+#      the frontend container on 127.0.0.1:8080.
+#   2. `location /api/` is unchanged in target (still 127.0.0.1:5000), with
+#      three additions:
+#        - proxy_http_version 1.1 (required by some rewrite endpoints that
+#          stream Excel responses)
+#        - client_max_body_size 25m (Excel imports can exceed nginx's
+#          default 1m limit)
+#        - longer proxy timeouts (Excel exports of large reports take
+#          minutes; default 60s would cut them off)
+#
+# Apply procedure (the runbook spells this out):
+#   1. cp the live file to a backup path (the runbook captures this).
+#   2. Open the live file in $EDITOR.
+#   3. Replace the existing `location /` block with the one below.
+#   4. Replace (or augment) the existing `location /api/` block with the
+#      one below — keep your original proxy_pass target if it differs.
+#   5. Leave all listen/server_name/ssl_* directives alone.
+#   6. sudo nginx -t
+#   7. sudo systemctl reload nginx
+
+server {
+    # ----------------------------------------------------------------------
+    # The directives below are PLACEHOLDERS for your live config. KEEP your
+    # existing listen / server_name / ssl_* / log_* / etc. directives. Do
+    # NOT copy these literally — they are only here to make the file parse
+    # if you do happen to test it standalone.
+    # ----------------------------------------------------------------------
+    server_name domain.name;
+    # listen 443 ssl http2;
+    # listen [::]:443 ssl http2;
+    # ssl_certificate     /etc/letsencrypt/live/domain.name/fullchain.pem;
+    # ssl_certificate_key /etc/letsencrypt/live/domain.name/privkey.pem;
+    # include /etc/letsencrypt/options-ssl-nginx.conf;
+    # ssl_dhparam /etc/letsencrypt/ssl-dhparams.pem;
+
+    # ----------------------------------------------------------------------
+    # API: proxied to the backend container on 127.0.0.1:5000.
+    # ----------------------------------------------------------------------
+    location /api/ {
+        proxy_pass http://127.0.0.1:5000;
+
+        proxy_http_version 1.1;
+        proxy_set_header Host              $host;
+        proxy_set_header X-Real-IP         $remote_addr;
+        proxy_set_header X-Forwarded-For   $proxy_add_x_forwarded_for;
+        proxy_set_header X-Forwarded-Proto $scheme;
+
+        # Excel imports POST large multipart bodies. Tune up from the
+        # nginx default of 1m. Adjust if your reports exceed 25MB.
+        client_max_body_size 25m;
+
+        # Excel exports of large projects can take several minutes.
+        # Defaults of 60s cut them off.
+        proxy_read_timeout 300s;
+        proxy_send_timeout 300s;
+        proxy_connect_timeout 30s;
+
+        # No buffering for Excel response streams (they stream as they're
+        # generated). Comment out if you don't see export issues — buffer-
+        # less mode trades a bit of latency for memory savings on small
+        # responses.
+        # proxy_buffering off;
+    }
+
+    # ----------------------------------------------------------------------
+    # Frontend: proxied to the frontend container on 127.0.0.1:8080,
+    # which serves the Vite-built SPA via its own internal nginx (with
+    # the SPA fallback rule).
+    #
+    # The legacy block was:
+    #   location / {
+    #       root /var/www/dist;
+    #       index index.html index.htm index.nginx-debian.html;
+    #       try_files $uri $uri/ /index.html;
+    #   }
+    # ----------------------------------------------------------------------
+    location / {
+        proxy_pass http://127.0.0.1:8080;
+
+        proxy_http_version 1.1;
+        proxy_set_header Host              $host;
+        proxy_set_header X-Real-IP         $remote_addr;
+        proxy_set_header X-Forwarded-For   $proxy_add_x_forwarded_for;
+        proxy_set_header X-Forwarded-Proto $scheme;
+    }
+
+    # ----------------------------------------------------------------------
+    # Optional: keep any non-tgem location blocks (e.g. /.well-known/
+    # acme-challenge handled by certbot, /healthz for an external probe,
+    # /static/ for a separate app) exactly as they were. Don't touch them.
+    # ----------------------------------------------------------------------
+}

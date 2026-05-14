@@ -1,0 +1,14 @@
+{
+  "count": 1,
+  "data": [
+    {
+      "confirmation": false,
+      "dateOfInvoice": "<TIMESTAMP>",
+      "deliveryCode": "<DELIVERY_CODE>",
+      "id": "<ID>",
+      "notes": "",
+      "releasedName": "Test User",
+      "warehouseManagerName": "WM 1"
+    }
+  ]
+}

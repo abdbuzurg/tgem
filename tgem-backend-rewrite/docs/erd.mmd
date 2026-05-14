@@ -1,0 +1,460 @@
+erDiagram
+  auction_items {
+    bigint id PK
+    bigint auction_package_id FK
+    text description
+    text name
+    text note
+    double quantity
+    text unit
+  }
+  auction_packages {
+    bigint id PK
+    bigint auction_id FK
+    text name
+  }
+  auction_participant_prices {
+    bigint id PK
+    bigint auction_item_id FK
+    text comments
+    decimal unit_price
+    bigint user_id FK
+  }
+  auctions {
+    bigint id PK
+    text name
+  }
+  districts {
+    bigint id PK
+    text name
+    bigint project_id FK
+  }
+  invoice_counts {
+    bigint id PK
+    bigint count
+    text invoice_type
+    bigint project_id FK
+  }
+  invoice_inputs {
+    bigint id PK
+    boolean confirmed
+    timestamp date_of_invoice
+    tinytext delivery_code
+    text notes
+    bigint project_id FK
+    bigint released_worker_id FK
+    bigint warehouse_manager_worker_id FK
+  }
+  invoice_materials {
+    bigint id PK
+    double amount
+    bigint invoice_id
+    text invoice_type
+    boolean is_defected
+    bigint material_cost_id FK
+    text notes
+    bigint project_id FK
+  }
+  invoice_object_operators {
+    bigint id PK
+    bigint invoice_object_id FK
+    bigint operator_worker_id FK
+  }
+  invoice_objects {
+    bigint id PK
+    boolean confirmed_by_operator
+    timestamp date_of_correction
+    timestamp date_of_invoice
+    text delivery_code
+    bigint district_id FK
+    bigint object_id FK
+    bigint project_id FK
+    bigint supervisor_worker_id FK
+    bigint team_id FK
+  }
+  invoice_operations {
+    bigint id PK
+    double amount
+    bigint invoice_id
+    text invoice_type
+    text notes
+    bigint operation_id FK
+    bigint project_id FK
+  }
+  invoice_output_out_of_projects {
+    bigint id PK
+    boolean confirmation
+    timestamp date_of_invoice
+    text delivery_code
+    text name_of_project
+    text notes
+    bigint project_id FK
+    bigint released_worker_id FK
+  }
+  invoice_outputs {
+    bigint id PK
+    boolean confirmation
+    timestamp date_of_invoice
+    text delivery_code
+    bigint district_id FK
+    text notes
+    bigint project_id FK
+    bigint recipient_worker_id FK
+    bigint released_worker_id FK
+    bigint team_id FK
+    bigint warehouse_manager_worker_id FK
+  }
+  invoice_returns {
+    bigint id PK
+    bigint accepted_by_worker_id FK
+    bigint acceptor_id
+    text acceptor_type
+    boolean confirmation
+    timestamp date_of_invoice
+    text delivery_code
+    bigint district_id FK
+    text notes
+    bigint project_id FK
+    bigint returner_id
+    text returner_type
+  }
+  invoice_write_offs {
+    bigint id PK
+    boolean confirmation
+    timestamp date_of_confirmation
+    timestamp date_of_invoice
+    text delivery_code
+    text notes
+    bigint project_id FK
+    bigint released_worker_id FK
+    bigint write_off_location_id
+    text write_off_type
+  }
+  kl04_kv_objects {
+    bigint id PK
+    double length
+    tinytext nourashes
+  }
+  material_costs {
+    bigint id PK
+    decimal cost_m19
+    decimal cost_prime
+    decimal cost_with_customer
+    bigint material_id FK
+  }
+  material_defects {
+    bigint id PK
+    double amount
+    bigint material_location_id FK
+  }
+  material_locations {
+    bigint id PK
+    double amount
+    bigint location_id
+    tinytext location_type
+    bigint material_cost_id FK
+    bigint project_id FK
+  }
+  material_providers {
+    bigint id PK
+    text name
+    bigint project_id FK
+  }
+  materials {
+    bigint id PK
+    text article
+    tinytext category
+    tinytext code
+    boolean has_serial_number
+    text name
+    text notes
+    double planned_amount_for_project
+    bigint project_id FK
+    boolean show_planned_amount_in_report
+    tinytext unit
+  }
+  mjd_objects {
+    bigint id PK
+    bigint amount_entrances
+    bigint amount_stores
+    boolean has_basement
+    tinytext model
+  }
+  object_supervisors {
+    bigint id PK
+    bigint object_id FK
+    bigint supervisor_worker_id FK
+  }
+  object_teams {
+    bigint id PK
+    bigint object_id FK
+    bigint team_id FK
+  }
+  objects {
+    bigint id PK
+    tinytext name
+    bigint object_detailed_id
+    bigint project_id FK
+    tinytext status
+    tinytext type
+  }
+  operation_materials {
+    bigint id PK
+    bigint material_id FK
+    bigint operation_id FK
+  }
+  operations {
+    bigint id PK
+    tinytext code
+    decimal cost_prime
+    decimal cost_with_customer
+    text name
+    double planned_amount_for_project
+    bigint project_id FK
+    boolean show_planned_amount_in_report
+  }
+  operator_error_founds {
+    bigint id PK
+    double amount
+    bigint invoice_materials_id FK
+    bigint material_cost_id FK
+    text notes
+  }
+  permissions {
+    bigint id PK
+    boolean d
+    boolean r
+    bigint resource_id FK
+    bigint role_id FK
+    boolean u
+    boolean w
+  }
+  project_progress_materials {
+    bigint id PK
+    double amount_in_objects
+    double amount_in_teams
+    double amount_in_warehouse
+    double amount_write_off
+    timestamp date
+    double installed
+    bigint material_cost_id FK
+    bigint project_id FK
+    double received
+  }
+  project_progress_operations {
+    bigint id PK
+    timestamp date
+    double installed
+    bigint operation_id FK
+    bigint project_id FK
+  }
+  projects {
+    bigint id PK
+    decimal budget
+    text budget_currency
+    tinytext client
+    timestamp date_end
+    timestamp date_start
+    text description
+    tinytext name
+    text project_manager
+    timestamp signed_date_of_contract
+  }
+  resources {
+    bigint id PK
+    text category
+    text name
+    text url
+  }
+  roles {
+    bigint id PK
+    text description
+    text name
+  }
+  s_ip_objects {
+    bigint id PK
+    bigint amount_feeders
+  }
+  serial_number_locations {
+    bigint id PK
+    bigint location_id
+    text location_type
+    bigint project_id FK
+    bigint serial_number_id FK
+  }
+  serial_number_movements {
+    bigint id PK
+    boolean confirmation
+    bigint invoice_id
+    text invoice_type
+    boolean is_defected
+    bigint project_id FK
+    bigint serial_number_id FK
+  }
+  serial_numbers {
+    bigint id PK
+    text code
+    bigint material_cost_id FK
+    bigint project_id FK
+  }
+  stvt_objects {
+    bigint id PK
+    tinytext tt_coefficient
+    tinytext voltage_class
+  }
+  substation_cell_nourashes_substation_objects {
+    bigint id PK
+    bigint substation_cell_object_id FK
+    bigint substation_object_id FK
+  }
+  substation_cell_objects {
+    bigint id PK
+  }
+  substation_objects {
+    bigint id PK
+    bigint number_of_transformers
+    text voltage_class
+  }
+  team_leaders {
+    bigint id PK
+    bigint leader_worker_id FK
+    bigint team_id FK
+  }
+  teams {
+    bigint id PK
+    tinytext company
+    tinytext mobile_number
+    tinytext number
+    bigint project_id FK
+  }
+  test_migrations {
+    bigint id PK
+    int value
+  }
+  tp_nourashes_objects {
+    bigint id PK
+    bigint target_id
+    text target_type
+    bigint tp_object_id FK
+  }
+  tp_objects {
+    bigint id PK
+    tinytext model
+    tinytext voltage_class
+  }
+  user_actions {
+    bigint id PK
+    bigint action_id
+    boolean action_status
+    text action_status_message
+    text action_type
+    text action_url
+    timestamp date_of_action
+    bigint project_id FK
+    bigint user_id FK
+  }
+  user_in_projects {
+    bigint id PK
+    bigint project_id FK
+    bigint user_id FK
+  }
+  users {
+    bigint id PK
+    text password
+    bigint role_id FK
+    tinytext username
+    bigint worker_id FK
+  }
+  worker_attendances {
+    bigint id PK
+    timestamp end
+    bigint project_id FK
+    timestamp start
+    bigint worker_id FK
+  }
+  workers {
+    bigint id PK
+    text company_worker_id
+    text job_title_in_company
+    tinytext job_title_in_project
+    tinytext mobile_number
+    tinytext name
+    bigint project_id FK
+  }
+
+  auction_items ||--o{ auction_participant_prices : "auction_items.id = auction_participant_prices.auction_item_id"
+  auction_packages ||--o{ auction_items : "auction_packages.id = auction_items.auction_package_id"
+  auctions ||--o{ auction_packages : "auctions.id = auction_packages.auction_id"
+  districts ||--o{ invoice_objects : "districts.id = invoice_objects.district_id"
+  districts ||--o{ invoice_outputs : "districts.id = invoice_outputs.district_id"
+  districts ||--o{ invoice_returns : "districts.id = invoice_returns.district_id"
+  invoice_materials ||--o{ operator_error_founds : "invoice_materials.id = operator_error_founds.invoice_materials_id"
+  invoice_objects ||--o{ invoice_object_operators : "invoice_objects.id = invoice_object_operators.invoice_object_id"
+  material_costs ||--o{ invoice_materials : "material_costs.id = invoice_materials.material_cost_id"
+  material_costs ||--o{ material_locations : "material_costs.id = material_locations.material_cost_id"
+  material_costs ||--o{ operator_error_founds : "material_costs.id = operator_error_founds.material_cost_id"
+  material_costs ||--o{ project_progress_materials : "material_costs.id = project_progress_materials.material_cost_id"
+  material_costs ||--o{ serial_numbers : "material_costs.id = serial_numbers.material_cost_id"
+  material_locations ||--o{ material_defects : "material_locations.id = material_defects.material_location_id"
+  materials ||--o{ material_costs : "materials.id = material_costs.material_id"
+  materials ||--o{ operation_materials : "materials.id = operation_materials.material_id"
+  objects ||--o{ invoice_objects : "objects.id = invoice_objects.object_id"
+  objects ||--o{ object_supervisors : "objects.id = object_supervisors.object_id"
+  objects ||--o{ object_teams : "objects.id = object_teams.object_id"
+  objects ||--o{ substation_cell_nourashes_substation_objects : "objects.id = substation_cell_nourashes_substation_objects.substation_cell_object_id"
+  objects ||--o{ substation_cell_nourashes_substation_objects : "objects.id = substation_cell_nourashes_substation_objects.substation_object_id"
+  objects ||--o{ tp_nourashes_objects : "objects.id = tp_nourashes_objects.tp_object_id"
+  operations ||--o{ invoice_operations : "operations.id = invoice_operations.operation_id"
+  operations ||--o{ operation_materials : "operations.id = operation_materials.operation_id"
+  operations ||--o{ project_progress_operations : "operations.id = project_progress_operations.operation_id"
+  projects ||--o{ districts : "projects.id = districts.project_id"
+  projects ||--o{ invoice_counts : "projects.id = invoice_counts.project_id"
+  projects ||--o{ invoice_inputs : "projects.id = invoice_inputs.project_id"
+  projects ||--o{ invoice_materials : "projects.id = invoice_materials.project_id"
+  projects ||--o{ invoice_objects : "projects.id = invoice_objects.project_id"
+  projects ||--o{ invoice_operations : "projects.id = invoice_operations.project_id"
+  projects ||--o{ invoice_output_out_of_projects : "projects.id = invoice_output_out_of_projects.project_id"
+  projects ||--o{ invoice_outputs : "projects.id = invoice_outputs.project_id"
+  projects ||--o{ invoice_returns : "projects.id = invoice_returns.project_id"
+  projects ||--o{ invoice_write_offs : "projects.id = invoice_write_offs.project_id"
+  projects ||--o{ material_locations : "projects.id = material_locations.project_id"
+  projects ||--o{ material_providers : "projects.id = material_providers.project_id"
+  projects ||--o{ materials : "projects.id = materials.project_id"
+  projects ||--o{ objects : "projects.id = objects.project_id"
+  projects ||--o{ operations : "projects.id = operations.project_id"
+  projects ||--o{ project_progress_materials : "projects.id = project_progress_materials.project_id"
+  projects ||--o{ project_progress_operations : "projects.id = project_progress_operations.project_id"
+  projects ||--o{ serial_number_locations : "projects.id = serial_number_locations.project_id"
+  projects ||--o{ serial_number_movements : "projects.id = serial_number_movements.project_id"
+  projects ||--o{ serial_numbers : "projects.id = serial_numbers.project_id"
+  projects ||--o{ teams : "projects.id = teams.project_id"
+  projects ||--o{ user_actions : "projects.id = user_actions.project_id"
+  projects ||--o{ user_in_projects : "projects.id = user_in_projects.project_id"
+  projects ||--o{ worker_attendances : "projects.id = worker_attendances.project_id"
+  projects ||--o{ workers : "projects.id = workers.project_id"
+  resources ||--o{ permissions : "resources.id = permissions.resource_id"
+  roles ||--o{ permissions : "roles.id = permissions.role_id"
+  roles ||--o{ users : "roles.id = users.role_id"
+  serial_numbers ||--o{ serial_number_locations : "serial_numbers.id = serial_number_locations.serial_number_id"
+  serial_numbers ||--o{ serial_number_movements : "serial_numbers.id = serial_number_movements.serial_number_id"
+  teams ||--o{ invoice_objects : "teams.id = invoice_objects.team_id"
+  teams ||--o{ invoice_outputs : "teams.id = invoice_outputs.team_id"
+  teams ||--o{ object_teams : "teams.id = object_teams.team_id"
+  teams ||--o{ team_leaders : "teams.id = team_leaders.team_id"
+  users ||--o{ auction_participant_prices : "users.id = auction_participant_prices.user_id"
+  users ||--o{ user_actions : "users.id = user_actions.user_id"
+  users ||--o{ user_in_projects : "users.id = user_in_projects.user_id"
+  workers ||--o{ invoice_inputs : "workers.id = invoice_inputs.released_worker_id"
+  workers ||--o{ invoice_inputs : "workers.id = invoice_inputs.warehouse_manager_worker_id"
+  workers ||--o{ invoice_object_operators : "workers.id = invoice_object_operators.operator_worker_id"
+  workers ||--o{ invoice_objects : "workers.id = invoice_objects.supervisor_worker_id"
+  workers ||--o{ invoice_output_out_of_projects : "workers.id = invoice_output_out_of_projects.released_worker_id"
+  workers ||--o{ invoice_outputs : "workers.id = invoice_outputs.recipient_worker_id"
+  workers ||--o{ invoice_outputs : "workers.id = invoice_outputs.released_worker_id"
+  workers ||--o{ invoice_outputs : "workers.id = invoice_outputs.warehouse_manager_worker_id"
+  workers ||--o{ invoice_returns : "workers.id = invoice_returns.accepted_by_worker_id"
+  workers ||--o{ invoice_write_offs : "workers.id = invoice_write_offs.released_worker_id"
+  workers ||--o{ object_supervisors : "workers.id = object_supervisors.supervisor_worker_id"
+  workers ||--o{ team_leaders : "workers.id = team_leaders.leader_worker_id"
+  workers ||--o{ users : "workers.id = users.worker_id"
+  workers ||--o{ worker_attendances : "workers.id = worker_attendances.worker_id"

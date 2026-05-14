@@ -1,0 +1,40 @@
+# Keep the build context small. The build is fully reproducible from
+# package.json + package-lock.json + src/.
+
+# Local-only build outputs (the container rebuilds these from source)
+dist/
+dist-ssr/
+node_modules/
+
+# Env files. The Dockerfile sets VITE_API_BASE_URL via ARG/ENV; excluding
+# .env files here removes precedence ambiguity in Vite's loadEnv.
+.env
+.env.local
+.env.*.local
+.env.development
+.env.production
+
+# Version control
+.git
+.gitignore
+
+# AI / editor artifacts
+.claude/
+.cursor/
+.vscode/
+.idea/
+CLAUDE.md
+AGENTS.md
+PROGRESS.md
+
+# Logs
+*.log
+npm-debug.log*
+yarn-debug.log*
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Documentation
+README.md

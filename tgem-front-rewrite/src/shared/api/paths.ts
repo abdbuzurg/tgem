@@ -1,0 +1,5 @@
+export const USER_PATH = "user"
+export const INVOICE_PATH = "invoice"
+export const TEAM_PATH = "team"
+export const MATERIAL_PATH = "material"
+export const WORKER_PATH = "worker"

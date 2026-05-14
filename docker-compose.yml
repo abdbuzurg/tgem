@@ -1,0 +1,112 @@
+# docker-compose.yml — tgem rewrite stack
+#
+# This compose file replaces the legacy pm2-managed Go backend and the
+# nginx-served /var/www/dist frontend with two containerized services. Both
+# services bind exclusively to 127.0.0.1 on the host so the host nginx
+# remains the only public ingress.
+#
+# Data tier:
+#   PostgreSQL stays on the host (NOT containerized). The backend reaches it
+#   via host.docker.internal, mapped to the host gateway through extra_hosts.
+#   This is intentional and scoped to this migration — moving Postgres into
+#   a container is a separate decision with its own backup/restore choreography.
+#
+# Frontend ingress flow at runtime:
+#   internet → host nginx (TLS) → 127.0.0.1:8080 → frontend container (:80)
+#   internet → host nginx       → 127.0.0.1:5000 → backend  container (:5000)
+#
+# Operator workflow:
+#   cp .env.backend.example .env.backend
+#   $EDITOR .env.backend                # fill in production secrets
+#   docker compose build
+#   docker compose up -d
+#   docker compose logs -f
+#
+# Reverse: docker compose down (containers and network removed; named volumes
+# preserved until `docker compose down -v` is run explicitly).
+
+services:
+  backend:
+    build:
+      context: ./tgem-backend-rewrite
+      dockerfile: Dockerfile
+    image: tgem-backend:latest
+    container_name: tgem-backend
+    restart: unless-stopped
+
+    # Secrets and config sourced from a host-side file. .env.backend is
+    # gitignored; .env.backend.example is the committed template.
+    env_file:
+      - ./.env.backend
+
+    # Host Postgres is reachable from the bridge via host.docker.internal
+    # on Linux when host-gateway is mapped explicitly. Without this line,
+    # the container has no DNS for the host.
+    extra_hosts:
+      - "host.docker.internal:host-gateway"
+
+    # Bind only to host loopback. Host nginx is the only public reader of
+    # this port; do not change to 0.0.0.0 here.
+    ports:
+      - "127.0.0.1:5000:5000"
+
+    # Excel import/export working dirs and the (legacy) Files.Path target.
+    # Named volumes survive container restarts.
+    volumes:
+      - backend_storage:/app/storage
+      - backend_files:/app/files
+
+    networks:
+      - tgem
+
+    # Cap log size — GORM logger.Info mode emits every SQL statement to
+    # stdout. Without these caps, host disk fills within days.
+    logging:
+      driver: json-file
+      options:
+        max-size: "10m"
+        max-file: "5"
+
+  frontend:
+    build:
+      context: ./tgem-front-rewrite
+      dockerfile: Dockerfile
+      args:
+        # /api keeps the bundle origin-agnostic; host nginx serves both
+        # the frontend and /api/ on the same hostname.
+        VITE_API_BASE_URL: /api
+    image: tgem-frontend:latest
+    container_name: tgem-frontend
+    restart: unless-stopped
+
+    ports:
+      - "127.0.0.1:8080:80"
+
+    # The frontend container has no runtime dependency on the backend (it
+    # only serves static files), but listing it ensures backend builds
+    # first when both are bumped together.
+    depends_on:
+      - backend
+
+    networks:
+      - tgem
+
+    logging:
+      driver: json-file
+      options:
+        max-size: "10m"
+        max-file: "5"
+
+# Named volumes for backend writable state. backend_storage holds Excel
+# import/export working files; backend_files is the legacy Files.Path
+# target (rarely used but referenced by the config).
+volumes:
+  backend_storage:
+  backend_files:
+
+# Single bridge network. Both services attach; backend connects to host
+# Postgres via host.docker.internal, frontend talks to nothing except via
+# the host nginx (it doesn't need to reach the backend container directly).
+networks:
+  tgem:
+    driver: bridge
