@@ -1,45 +1,5 @@
 -- +goose Up
 
--- ============================================================================
--- Pre-cleanup: remove child references to objects that are about to be deleted.
--- The original migration only handled `object_teams` and `object_supervisors`
--- in this slot (and only for already-orphaned children), but `objects` has
--- nine FK-referencing tables, several of which point at the parents this
--- migration deletes. Without this block the parent DELETEs hit FK violations.
--- ============================================================================
-WITH soon_to_be_deleted_objects AS (
-    SELECT id FROM objects WHERE
-        (type='kl04kv_objects'          AND object_detailed_id IS NOT NULL AND object_detailed_id NOT IN (SELECT id FROM kl04_kv_objects))         OR
-        (type='mjd_objects'             AND object_detailed_id IS NOT NULL AND object_detailed_id NOT IN (SELECT id FROM mjd_objects))             OR
-        (type='sip_objects'             AND object_detailed_id IS NOT NULL AND object_detailed_id NOT IN (SELECT id FROM s_ip_objects))            OR
-        (type='stvt_objects'            AND object_detailed_id IS NOT NULL AND object_detailed_id NOT IN (SELECT id FROM stvt_objects))            OR
-        (type='tp_objects'              AND object_detailed_id IS NOT NULL AND object_detailed_id NOT IN (SELECT id FROM tp_objects))              OR
-        (type='substation_objects'      AND object_detailed_id IS NOT NULL AND object_detailed_id NOT IN (SELECT id FROM substation_objects))      OR
-        (type='substation_cell_objects' AND object_detailed_id IS NOT NULL AND object_detailed_id NOT IN (SELECT id FROM substation_cell_objects))
-)
-DELETE FROM object_teams       WHERE object_id IN (SELECT id FROM soon_to_be_deleted_objects);
-
-WITH soon_to_be_deleted_objects AS ( /* same CTE — copied because PG doesn't share CTEs across statements */
-    SELECT id FROM objects WHERE
-        (type='kl04kv_objects'          AND object_detailed_id IS NOT NULL AND object_detailed_id NOT IN (SELECT id FROM kl04_kv_objects))         OR
-        (type='mjd_objects'             AND object_detailed_id IS NOT NULL AND object_detailed_id NOT IN (SELECT id FROM mjd_objects))             OR
-        (type='sip_objects'             AND object_detailed_id IS NOT NULL AND object_detailed_id NOT IN (SELECT id FROM s_ip_objects))            OR
-        (type='stvt_objects'            AND object_detailed_id IS NOT NULL AND object_detailed_id NOT IN (SELECT id FROM stvt_objects))            OR
-        (type='tp_objects'              AND object_detailed_id IS NOT NULL AND object_detailed_id NOT IN (SELECT id FROM tp_objects))              OR
-        (type='substation_objects'      AND object_detailed_id IS NOT NULL AND object_detailed_id NOT IN (SELECT id FROM substation_objects))      OR
-        (type='substation_cell_objects' AND object_detailed_id IS NOT NULL AND object_detailed_id NOT IN (SELECT id FROM substation_cell_objects))
-)
-DELETE FROM object_supervisors WHERE object_id IN (SELECT id FROM soon_to_be_deleted_objects);
-
--- Repeat the same CTE-then-DELETE for each remaining FK table:
--- invoice_objects (object_id)
--- tp_nourashes_objects (tp_object_id)
--- substation_cell_nourashes_substation_objects (substation_object_id)
--- substation_cell_nourashes_substation_objects (substation_cell_object_id)
--- supervisor_objects (object_id) -- empty in your data, but include for correctness
--- team_objects (object_id) -- empty
--- object_operations (object_id) -- empty
-
 -- Phase 7 data cleanup: brings the database into a known clean state
 -- BEFORE the phase-7 code fixes start running. Each section is a no-op on
 -- a database that's never run the buggy code; on production it sweeps up
@@ -53,6 +13,34 @@ DELETE FROM object_supervisors WHERE object_id IN (SELECT id FROM soon_to_be_del
 -- counts via COUNT(*).
 
 -- +goose StatementBegin
+
+-- =============================================================================
+-- 0. Pre-cleanup: stage every `objects` row this migration will delete, then
+--    remove all child references across the 9 FK-referencing tables. Without
+--    this, the parent DELETEs in sections 1 and 4 fail with FK violations
+--    against production-shape data.
+--    Goose runs each migration in a single transaction, so the temp table
+--    with ON COMMIT DROP is cleaned up automatically on success/rollback.
+-- =============================================================================
+CREATE TEMP TABLE _soon_to_be_deleted_objects ON COMMIT DROP AS
+SELECT id FROM objects WHERE
+    (type='kl04kv_objects'          AND object_detailed_id IS NOT NULL AND object_detailed_id NOT IN (SELECT id FROM kl04_kv_objects))         OR
+    (type='mjd_objects'             AND object_detailed_id IS NOT NULL AND object_detailed_id NOT IN (SELECT id FROM mjd_objects))             OR
+    (type='sip_objects'             AND object_detailed_id IS NOT NULL AND object_detailed_id NOT IN (SELECT id FROM s_ip_objects))            OR
+    (type='stvt_objects'            AND object_detailed_id IS NOT NULL AND object_detailed_id NOT IN (SELECT id FROM stvt_objects))            OR
+    (type='tp_objects'              AND object_detailed_id IS NOT NULL AND object_detailed_id NOT IN (SELECT id FROM tp_objects))              OR
+    (type='substation_objects'      AND object_detailed_id IS NOT NULL AND object_detailed_id NOT IN (SELECT id FROM substation_objects))      OR
+    (type='substation_cell_objects' AND object_detailed_id IS NOT NULL AND object_detailed_id NOT IN (SELECT id FROM substation_cell_objects));
+
+DELETE FROM object_teams                                 WHERE object_id                  IN (SELECT id FROM _soon_to_be_deleted_objects);
+DELETE FROM object_supervisors                           WHERE object_id                  IN (SELECT id FROM _soon_to_be_deleted_objects);
+DELETE FROM invoice_objects                              WHERE object_id                  IN (SELECT id FROM _soon_to_be_deleted_objects);
+DELETE FROM tp_nourashes_objects                         WHERE tp_object_id               IN (SELECT id FROM _soon_to_be_deleted_objects);
+DELETE FROM substation_cell_nourashes_substation_objects WHERE substation_object_id       IN (SELECT id FROM _soon_to_be_deleted_objects);
+DELETE FROM substation_cell_nourashes_substation_objects WHERE substation_cell_object_id  IN (SELECT id FROM _soon_to_be_deleted_objects);
+DELETE FROM supervisor_objects                           WHERE object_id                  IN (SELECT id FROM _soon_to_be_deleted_objects);
+DELETE FROM team_objects                                 WHERE object_id                  IN (SELECT id FROM _soon_to_be_deleted_objects);
+DELETE FROM object_operations                            WHERE object_id                  IN (SELECT id FROM _soon_to_be_deleted_objects);
 
 -- =============================================================================
 -- 1. kl04kv_object Delete bug (6.21):
