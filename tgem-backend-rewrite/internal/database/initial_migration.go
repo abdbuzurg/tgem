@@ -2,25 +2,32 @@ package database
 
 import (
 	"backend-v2/model"
+	_ "embed"
 	"errors"
 	"fmt"
-	"os"
 
 	"gorm.io/gorm"
 )
 
+//go:embed seed/project_dev.sql
+var projectDevSeedSQL string
+
+//go:embed seed/resource.sql
+var resourceSeedSQL string
+
+//go:embed seed/superadmin.sql
+var superadminSeedSQL string
+
 func InitialMigration(db *gorm.DB) {
-	err := execSeedFile(db, "./internal/database/seed/project_dev.sql")
-	if err != nil {
+	if err := execSeed(db, "seed/project_dev.sql", projectDevSeedSQL); err != nil {
 		panic(err)
 	}
 
-	err = execSeedFile(db, "./internal/database/seed/resource.sql")
-	if err != nil {
+	if err := execSeed(db, "seed/resource.sql", resourceSeedSQL); err != nil {
 		panic(err)
 	}
 
-	if err := execSeedFile(db, "./internal/database/seed/superadmin.sql"); err != nil {
+	if err := execSeed(db, "seed/superadmin.sql", superadminSeedSQL); err != nil {
 		panic(err)
 	}
 
@@ -29,22 +36,10 @@ func InitialMigration(db *gorm.DB) {
 	}
 }
 
-// Function for running SEED scripts
-// filepath should related to the file main.go
-func execSeedFile(db *gorm.DB, filepath string) error {
-
-	file, err := os.ReadFile(filepath)
-	if err != nil {
-		return fmt.Errorf("не удалось найти файл в %v: %v", filepath, err)
+func execSeed(db *gorm.DB, name, sql string) error {
+	if err := db.Exec(sql).Error; err != nil {
+		return fmt.Errorf("не удалось запустить seed-скрипт %s: %v", name, err)
 	}
-
-	sql := string(file)
-
-	err = db.Exec(sql).Error
-	if err != nil {
-		return fmt.Errorf("не удалось запустить изначальный скрипт seed для доступов: %v", err)
-	}
-
 	return nil
 }
 
