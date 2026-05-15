@@ -203,6 +203,7 @@ SELECT
     materials.id                                        AS material_id,
     COALESCE(materials.name, '')::text                  AS material_name,
     COALESCE(materials.unit, '')::text                  AS material_unit,
+    COALESCE(materials.code, '')::text                  AS material_code,
     COALESCE(material_costs.cost_m19, 0)::numeric       AS material_cost_m19,
     COALESCE(invoice_materials.notes, '')::text         AS notes,
     COALESCE(invoice_materials.amount, 0)::numeric      AS amount

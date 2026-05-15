@@ -761,6 +761,7 @@ func (u *invoiceOutputUsecase) Report(filter dto.InvoiceOutputReportFilterReques
 	}
 	sheetName := "Sheet1"
 	f.SetCellStr(sheetName, "L1", "ID материала")
+	f.SetCellStr(sheetName, "M1", "Код материала")
 
 	rowCount := 2
 	for _, invoice := range invoices {
@@ -790,6 +791,7 @@ func (u *invoiceOutputUsecase) Report(filter dto.InvoiceOutputReportFilterReques
 			f.SetCellFloat(sheetName, "J"+fmt.Sprint(rowCount), materialCost, 2, 64)
 			f.SetCellValue(sheetName, "K"+fmt.Sprint(rowCount), im.Notes)
 			f.SetCellInt(sheetName, "L"+fmt.Sprint(rowCount), int(im.MaterialID))
+			f.SetCellStr(sheetName, "M"+fmt.Sprint(rowCount), im.MaterialCode)
 			rowCount++
 		}
 	}

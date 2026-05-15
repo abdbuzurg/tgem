@@ -112,6 +112,7 @@ SELECT
     materials.id                                        AS material_id,
     COALESCE(materials.name, '')::text                  AS material_name,
     COALESCE(materials.unit, '')::text                  AS material_unit,
+    COALESCE(materials.code, '')::text                  AS material_code,
     COALESCE(materials.category, '')::text              AS material_category,
     COALESCE(material_costs.cost_prime, 0)::numeric     AS material_cost_prime,
     COALESCE(material_costs.cost_m19, 0)::numeric       AS material_cost_m19,
@@ -136,6 +137,7 @@ type ListInvoiceMaterialsDataForReportRow struct {
 	MaterialID               int64          `json:"material_id"`
 	MaterialName             string         `json:"material_name"`
 	MaterialUnit             string         `json:"material_unit"`
+	MaterialCode             string         `json:"material_code"`
 	MaterialCategory         string         `json:"material_category"`
 	MaterialCostPrime        pgtype.Numeric `json:"material_cost_prime"`
 	MaterialCostM19          pgtype.Numeric `json:"material_cost_m19"`
@@ -158,6 +160,7 @@ func (q *Queries) ListInvoiceMaterialsDataForReport(ctx context.Context, arg Lis
 			&i.MaterialID,
 			&i.MaterialName,
 			&i.MaterialUnit,
+			&i.MaterialCode,
 			&i.MaterialCategory,
 			&i.MaterialCostPrime,
 			&i.MaterialCostM19,

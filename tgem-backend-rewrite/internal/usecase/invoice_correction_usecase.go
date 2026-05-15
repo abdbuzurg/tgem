@@ -411,6 +411,7 @@ func (u *invoiceCorrectionUsecase) Report(filter dto.InvoiceCorrectionReportFilt
 	}
 	sheetName := "Sheet1"
 	f.SetCellStr(sheetName, "M1", "ID материала")
+	f.SetCellStr(sheetName, "N1", "Код материала")
 
 	rowCount := 2
 	for _, invoice := range invoices {
@@ -445,6 +446,7 @@ func (u *invoiceCorrectionUsecase) Report(filter dto.InvoiceCorrectionReportFilt
 			f.SetCellFloat(sheetName, "K"+fmt.Sprint(rowCount+index), float64FromPgNumeric(im.InvoiceMaterialAmount), 2, 64)
 			f.SetCellStr(sheetName, "L"+fmt.Sprint(rowCount+index), im.InvoiceMaterialNotes)
 			f.SetCellInt(sheetName, "M"+fmt.Sprint(rowCount+index), int(im.MaterialID))
+			f.SetCellStr(sheetName, "N"+fmt.Sprint(rowCount+index), im.MaterialCode)
 		}
 
 		rowCount += len(invoiceMaterials)

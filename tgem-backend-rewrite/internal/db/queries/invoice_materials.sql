@@ -69,6 +69,7 @@ SELECT
     materials.id                                        AS material_id,
     COALESCE(materials.name, '')::text                  AS material_name,
     COALESCE(materials.unit, '')::text                  AS material_unit,
+    COALESCE(materials.code, '')::text                  AS material_code,
     COALESCE(materials.category, '')::text              AS material_category,
     COALESCE(material_costs.cost_prime, 0)::numeric     AS material_cost_prime,
     COALESCE(material_costs.cost_m19, 0)::numeric       AS material_cost_m19,

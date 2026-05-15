@@ -709,6 +709,7 @@ func (u *invoiceReturnUsecase) Report(filter dto.InvoiceReturnReportFilterReques
 
 	sheetName := "Sheet1"
 	f.SetCellStr(sheetName, "K1", "ID материала")
+	f.SetCellStr(sheetName, "L1", "Код материала")
 
 	rowCount := 2
 
@@ -719,6 +720,7 @@ func (u *invoiceReturnUsecase) Report(filter dto.InvoiceReturnReportFilterReques
 		DateOfInvoice     time.Time
 		MaterialID        uint
 		MaterialName      string
+		MaterialCode      string
 		MaterialUnit      string
 		Amount            float64
 		Price             float64
@@ -774,6 +776,7 @@ func (u *invoiceReturnUsecase) Report(filter dto.InvoiceReturnReportFilterReques
 
 			oneEntry.MaterialID = uint(material.ID)
 			oneEntry.MaterialName = material.Name.String
+			oneEntry.MaterialCode = material.Code.String
 			oneEntry.MaterialUnit = material.Unit.String
 			oneEntry.Price, _ = decimalFromPgNumeric(materialCost.CostM19).Float64()
 			if im.IsDefected.Bool {
@@ -805,6 +808,7 @@ func (u *invoiceReturnUsecase) Report(filter dto.InvoiceReturnReportFilterReques
 		f.SetCellValue(sheetName, "I"+fmt.Sprint(rowCount), oneEntry.IsDefected)
 		f.SetCellValue(sheetName, "J"+fmt.Sprint(rowCount), oneEntry.Notes)
 		f.SetCellInt(sheetName, "K"+fmt.Sprint(rowCount), int(oneEntry.MaterialID))
+		f.SetCellStr(sheetName, "L"+fmt.Sprint(rowCount), oneEntry.MaterialCode)
 		rowCount++
 	}
 

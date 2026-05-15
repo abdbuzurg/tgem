@@ -311,6 +311,7 @@ SELECT
     materials.id                                        AS material_id,
     COALESCE(materials.name, '')::text                  AS material_name,
     COALESCE(materials.unit, '')::text                  AS material_unit,
+    COALESCE(materials.code, '')::text                  AS material_code,
     COALESCE(material_costs.cost_m19, 0)::numeric       AS material_cost_m19,
     COALESCE(invoice_materials.notes, '')::text         AS notes,
     COALESCE(invoice_materials.amount, 0)::numeric      AS amount
@@ -326,6 +327,7 @@ type ListInvoiceOutputMaterialDataForReportRow struct {
 	MaterialID      int64          `json:"material_id"`
 	MaterialName    string         `json:"material_name"`
 	MaterialUnit    string         `json:"material_unit"`
+	MaterialCode    string         `json:"material_code"`
 	MaterialCostM19 pgtype.Numeric `json:"material_cost_m19"`
 	Notes           string         `json:"notes"`
 	Amount          pgtype.Numeric `json:"amount"`
@@ -344,6 +346,7 @@ func (q *Queries) ListInvoiceOutputMaterialDataForReport(ctx context.Context, in
 			&i.MaterialID,
 			&i.MaterialName,
 			&i.MaterialUnit,
+			&i.MaterialCode,
 			&i.MaterialCostM19,
 			&i.Notes,
 			&i.Amount,
