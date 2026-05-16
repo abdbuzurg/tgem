@@ -49,8 +49,8 @@ SELECT
     COALESCE(released.name, '')::text                                AS released_name,
     invoice_inputs.date_of_invoice                                   AS date_of_invoice
 FROM invoice_inputs
-INNER JOIN workers AS warehouse_manager ON warehouse_manager.id = invoice_inputs.warehouse_manager_worker_id
-INNER JOIN workers AS released ON released.id = invoice_inputs.released_worker_id
+LEFT JOIN workers AS warehouse_manager ON warehouse_manager.id = invoice_inputs.warehouse_manager_worker_id
+LEFT JOIN workers AS released ON released.id = invoice_inputs.released_worker_id
 WHERE
     invoice_inputs.project_id = $1
     AND (NULLIF($2::bigint, 0) IS NULL OR warehouse_manager_worker_id = $2)
@@ -64,8 +64,8 @@ LIMIT $7 OFFSET $8;
 -- name: CountInvoiceInputsFiltered :one
 SELECT COUNT(*)::bigint
 FROM invoice_inputs
-INNER JOIN workers AS warehouse_manager ON warehouse_manager.id = invoice_inputs.warehouse_manager_worker_id
-INNER JOIN workers AS released ON released.id = invoice_inputs.released_worker_id
+LEFT JOIN workers AS warehouse_manager ON warehouse_manager.id = invoice_inputs.warehouse_manager_worker_id
+LEFT JOIN workers AS released ON released.id = invoice_inputs.released_worker_id
 WHERE
     invoice_inputs.project_id = $1
     AND (NULLIF($2::bigint, 0) IS NULL OR warehouse_manager_worker_id = $2)
@@ -83,8 +83,8 @@ SELECT
     COALESCE(released.name, '')::text                                AS released_name,
     invoice_inputs.date_of_invoice                                   AS date_of_invoice
 FROM invoice_inputs
-INNER JOIN workers AS warehouse_manager ON warehouse_manager.id = invoice_inputs.warehouse_manager_worker_id
-INNER JOIN workers AS released ON released.id = invoice_inputs.released_worker_id
+LEFT JOIN workers AS warehouse_manager ON warehouse_manager.id = invoice_inputs.warehouse_manager_worker_id
+LEFT JOIN workers AS released ON released.id = invoice_inputs.released_worker_id
 WHERE
     invoice_inputs.project_id = $1
     AND invoice_inputs.id IN (
@@ -105,8 +105,8 @@ LIMIT $2 OFFSET $3;
 -- name: CountInvoiceInputsByMaterials :one
 SELECT COUNT(*)::bigint
 FROM invoice_inputs
-INNER JOIN workers AS warehouse_manager ON warehouse_manager.id = invoice_inputs.warehouse_manager_worker_id
-INNER JOIN workers AS released ON released.id = invoice_inputs.released_worker_id
+LEFT JOIN workers AS warehouse_manager ON warehouse_manager.id = invoice_inputs.warehouse_manager_worker_id
+LEFT JOIN workers AS released ON released.id = invoice_inputs.released_worker_id
 WHERE
     invoice_inputs.project_id = $1
     AND invoice_inputs.id IN (
@@ -161,8 +161,8 @@ SELECT
     COALESCE(invoice_inputs.notes, '')::text         AS notes,
     invoice_inputs.date_of_invoice                   AS date_of_invoice
 FROM invoice_inputs
-INNER JOIN workers AS warehouse_manager ON warehouse_manager.id = invoice_inputs.warehouse_manager_worker_id
-INNER JOIN workers AS released ON released.id = invoice_inputs.released_worker_id
+LEFT JOIN workers AS warehouse_manager ON warehouse_manager.id = invoice_inputs.warehouse_manager_worker_id
+LEFT JOIN workers AS released ON released.id = invoice_inputs.released_worker_id
 WHERE
     invoice_inputs.project_id = $1
     AND (NULLIF($2::text, '') IS NULL OR invoice_inputs.delivery_code = $2)

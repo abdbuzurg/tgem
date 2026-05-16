@@ -262,6 +262,9 @@ func (u *invoiceReturnUsecase) buildInvoiceReturnItems(ctx context.Context, data
 		index := 0
 		amountLeft := item.Amount
 		for amountLeft > 0 {
+			if index >= len(rows) {
+				return nil, fmt.Errorf("Недостаточно материала на источнике для возврата запрошенного количества")
+			}
 			materialAmount := float64FromPgNumeric(rows[index].MaterialAmount)
 			imc := model.InvoiceMaterials{
 				MaterialCostID: uint(rows[index].MaterialCostID),
@@ -766,12 +769,12 @@ func (u *invoiceReturnUsecase) Report(filter dto.InvoiceReturnReportFilterReques
 
 			materialCost, err := u.q.GetMaterialCost(ctx, int64(uintFromPgInt8(im.MaterialCostID)))
 			if err != nil {
-				return "", nil
+				return "", err
 			}
 
 			material, err := u.q.GetMaterial(ctx, int64(uintFromPgInt8(materialCost.MaterialID)))
 			if err != nil {
-				return "", nil
+				return "", err
 			}
 
 			oneEntry.MaterialID = uint(material.ID)
@@ -1002,7 +1005,7 @@ func (u *invoiceReturnUsecase) GetMaterialsForEdit(id uint, locationType string,
 		ProjectID:    pgInt8(projectID),
 	})
 	if err != nil {
-		return []dto.InvoiceReturnMaterialForEdit{}, nil
+		return []dto.InvoiceReturnMaterialForEdit{}, err
 	}
 
 	data := make([]dto.InvoiceReturnMaterialForEdit, len(rows))

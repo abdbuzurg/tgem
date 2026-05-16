@@ -13,7 +13,7 @@ import useScrollPaginated from "@shared/hooks/useScrollPaginated"
 export default function InvoiceObjectPaginatedPage() {
   //FETCHING LOGIC
   const tableDataQuery = useInfiniteQuery<InvoiceObject, Error>({
-    queryKey: ["invoice-input"],
+    queryKey: ["invoice-objects-paginated"],
     queryFn: ({ pageParam }) => getInvoiceObject({ pageParam }),
     getNextPageParam: (lastPage) => {
       if (lastPage.page * ENTRY_LIMIT > lastPage.count) return undefined

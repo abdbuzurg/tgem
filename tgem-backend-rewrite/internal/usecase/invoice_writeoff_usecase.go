@@ -354,7 +354,7 @@ func (u *invoiceWriteOffUsecase) GetMaterialsForEdit(id uint, locationType strin
 		ProjectID:    pgInt8(projectID),
 	})
 	if err != nil {
-		return []dto.InvoiceWriteOffMaterialsForEdit{}, nil
+		return []dto.InvoiceWriteOffMaterialsForEdit{}, err
 	}
 
 	data := make([]dto.InvoiceWriteOffMaterialsForEdit, len(rows))

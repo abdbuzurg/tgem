@@ -264,10 +264,10 @@ FROM invoice_objects
 LEFT JOIN districts ON districts.id = invoice_objects.district_id
 INNER JOIN objects ON objects.id = invoice_objects.object_id
 INNER JOIN teams ON teams.id = invoice_objects.team_id
-INNER JOIN team_leaders ON team_leaders.team_id = teams.id
-INNER JOIN workers AS team_leader ON team_leader.id = team_leaders.leader_worker_id
-INNER JOIN invoice_object_operators ON invoice_object_operators.invoice_object_id = invoice_objects.id
-INNER JOIN workers AS operator ON operator.id = invoice_object_operators.operator_worker_id
+LEFT JOIN team_leaders ON team_leaders.team_id = teams.id
+LEFT JOIN workers AS team_leader ON team_leader.id = team_leaders.leader_worker_id
+LEFT JOIN invoice_object_operators ON invoice_object_operators.invoice_object_id = invoice_objects.id
+LEFT JOIN workers AS operator ON operator.id = invoice_object_operators.operator_worker_id
 WHERE
     invoice_objects.project_id = $1
     AND COALESCE(invoice_objects.confirmed_by_operator, false) = true
@@ -386,8 +386,8 @@ SELECT
     (COALESCE(w.name, '') || ' (' || COALESCE(t.number, '') || ')')::text AS label,
     t.id                                                                  AS value
 FROM teams t
-INNER JOIN team_leaders t2 ON t2.team_id = t.id
-INNER JOIN workers w ON w.id = t2.leader_worker_id
+LEFT JOIN team_leaders t2 ON t2.team_id = t.id
+LEFT JOIN workers w ON w.id = t2.leader_worker_id
 WHERE t.id IN (
     SELECT DISTINCT team_id
     FROM invoice_objects i
@@ -464,8 +464,8 @@ SELECT
     teams.id                                                                                  AS value,
     (COALESCE(teams.number, '') || ' (' || COALESCE(workers.name, '') || ')')::text           AS label
 FROM teams
-INNER JOIN team_leaders ON team_leaders.team_id = teams.id
-INNER JOIN workers ON workers.id = team_leaders.leader_worker_id
+LEFT JOIN team_leaders ON team_leaders.team_id = teams.id
+LEFT JOIN workers ON workers.id = team_leaders.leader_worker_id
 WHERE teams.id IN (
     SELECT DISTINCT(invoice_objects.team_id)
     FROM invoice_objects
@@ -512,11 +512,11 @@ SELECT
     COALESCE(io.confirmed_by_operator, false)::boolean          AS confirmed_by_operator,
     COALESCE(w2.name, '')::text                                 AS team_leader_name
 FROM invoice_objects AS io
-INNER JOIN workers AS w ON w.id = io.supervisor_worker_id
+LEFT JOIN workers AS w ON w.id = io.supervisor_worker_id
 LEFT JOIN districts AS d ON d.id = io.district_id
 INNER JOIN objects AS o ON o.id = io.object_id
-INNER JOIN team_leaders AS tl ON tl.team_id = io.team_id
-INNER JOIN workers AS w2 ON w2.id = tl.leader_worker_id
+LEFT JOIN team_leaders AS tl ON tl.team_id = io.team_id
+LEFT JOIN workers AS w2 ON w2.id = tl.leader_worker_id
 WHERE
     io.project_id = $1
     AND COALESCE(io.confirmed_by_operator, false) = false

@@ -38,9 +38,6 @@ DELETE FROM invoice_objects                              WHERE object_id        
 DELETE FROM tp_nourashes_objects                         WHERE tp_object_id               IN (SELECT id FROM _soon_to_be_deleted_objects);
 DELETE FROM substation_cell_nourashes_substation_objects WHERE substation_object_id       IN (SELECT id FROM _soon_to_be_deleted_objects);
 DELETE FROM substation_cell_nourashes_substation_objects WHERE substation_cell_object_id  IN (SELECT id FROM _soon_to_be_deleted_objects);
-DELETE FROM supervisor_objects                           WHERE object_id                  IN (SELECT id FROM _soon_to_be_deleted_objects);
-DELETE FROM team_objects                                 WHERE object_id                  IN (SELECT id FROM _soon_to_be_deleted_objects);
-DELETE FROM object_operations                            WHERE object_id                  IN (SELECT id FROM _soon_to_be_deleted_objects);
 
 -- =============================================================================
 -- 1. kl04kv_object Delete bug (6.21):

@@ -54,7 +54,7 @@ export default function InvoiceReturnObject() {
       onSuccess: () => {
         toast.dismiss(confirmationFileToast)
         toast.success("Подтвердающий файл загружен")
-        queryClient.invalidateQueries(["invoice-input"])
+        queryClient.invalidateQueries(["invoice-return-object"])
       },
       onError: (err) => {
         toast.dismiss(confirmationFileToast)

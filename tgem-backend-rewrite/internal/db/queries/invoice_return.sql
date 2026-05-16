@@ -71,9 +71,9 @@ SELECT
 FROM invoice_returns
 INNER JOIN districts ON districts.id = invoice_returns.district_id
 INNER JOIN teams ON teams.id = invoice_returns.returner_id
-INNER JOIN team_leaders ON team_leaders.team_id = teams.id
-INNER JOIN workers ON workers.id = team_leaders.leader_worker_id
-INNER JOIN workers AS acceptor_worker ON acceptor_worker.id = invoice_returns.accepted_by_worker_id
+LEFT JOIN team_leaders ON team_leaders.team_id = teams.id
+LEFT JOIN workers ON workers.id = team_leaders.leader_worker_id
+LEFT JOIN workers AS acceptor_worker ON acceptor_worker.id = invoice_returns.accepted_by_worker_id
 WHERE
     invoice_returns.project_id = $1
     AND invoice_returns.returner_type = 'team'
@@ -96,12 +96,12 @@ SELECT
 FROM invoice_returns
 INNER JOIN districts ON districts.id = invoice_returns.district_id
 INNER JOIN objects ON objects.id = invoice_returns.returner_id
-INNER JOIN object_supervisors ON objects.id = object_supervisors.object_id
-INNER JOIN workers ON workers.id = object_supervisors.supervisor_worker_id
+LEFT JOIN object_supervisors ON objects.id = object_supervisors.object_id
+LEFT JOIN workers ON workers.id = object_supervisors.supervisor_worker_id
 INNER JOIN teams ON teams.id = invoice_returns.acceptor_id
-INNER JOIN team_leaders ON team_leaders.team_id = teams.id
-INNER JOIN workers AS leader ON leader.id = team_leaders.leader_worker_id
-INNER JOIN workers AS acceptor_worker ON acceptor_worker.id = invoice_returns.accepted_by_worker_id
+LEFT JOIN team_leaders ON team_leaders.team_id = teams.id
+LEFT JOIN workers AS leader ON leader.id = team_leaders.leader_worker_id
+LEFT JOIN workers AS acceptor_worker ON acceptor_worker.id = invoice_returns.accepted_by_worker_id
 WHERE
     invoice_returns.project_id = $1
     AND invoice_returns.returner_type = 'object'
@@ -116,12 +116,12 @@ WHERE project_id = $1;
 -- name: ListInvoiceReturnUniqueTeams :many
 SELECT DISTINCT(COALESCE(returner_id, 0)::bigint)
 FROM invoice_returns
-WHERE returner_type = 'teams' AND project_id = $1 AND returner_id IS NOT NULL;
+WHERE returner_type = 'team' AND project_id = $1 AND returner_id IS NOT NULL;
 
 -- name: ListInvoiceReturnUniqueObjects :many
 SELECT DISTINCT(COALESCE(returner_id, 0)::bigint)
 FROM invoice_returns
-WHERE returner_type = 'objects' AND project_id = $1 AND returner_id IS NOT NULL;
+WHERE returner_type = 'object' AND project_id = $1 AND returner_id IS NOT NULL;
 
 -- name: ListInvoiceReturnReportData :many
 SELECT id, project_id, district_id, returner_type, returner_id,

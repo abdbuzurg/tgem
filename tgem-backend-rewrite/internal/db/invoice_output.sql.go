@@ -193,11 +193,11 @@ FROM invoice_outputs
 INNER JOIN projects ON projects.id = invoice_outputs.project_id
 INNER JOIN districts ON districts.id = invoice_outputs.district_id
 INNER JOIN teams ON teams.id = invoice_outputs.team_id
-INNER JOIN team_leaders ON team_leaders.team_id = teams.id
-INNER JOIN workers AS team_leader ON team_leader.id = team_leaders.leader_worker_id
-INNER JOIN workers AS warehouse_manager ON warehouse_manager.id = invoice_outputs.warehouse_manager_worker_id
-INNER JOIN workers AS released ON released.id = invoice_outputs.released_worker_id
-INNER JOIN workers AS recipient ON recipient.id = invoice_outputs.recipient_worker_id
+LEFT JOIN team_leaders ON team_leaders.team_id = teams.id
+LEFT JOIN workers AS team_leader ON team_leader.id = team_leaders.leader_worker_id
+LEFT JOIN workers AS warehouse_manager ON warehouse_manager.id = invoice_outputs.warehouse_manager_worker_id
+LEFT JOIN workers AS released ON released.id = invoice_outputs.released_worker_id
+LEFT JOIN workers AS recipient ON recipient.id = invoice_outputs.recipient_worker_id
 WHERE invoice_outputs.id = $1
 ORDER BY team_leaders.id DESC
 LIMIT 1
@@ -434,11 +434,11 @@ SELECT
     COALESCE(leader_worker.name, '')::text              AS team_leader_name,
     invoice_outputs.date_of_invoice                     AS date_of_invoice
 FROM invoice_outputs
-INNER JOIN workers AS warehouse_manager ON warehouse_manager.id = invoice_outputs.warehouse_manager_worker_id
-INNER JOIN workers AS recipient_worker ON recipient_worker.id = invoice_outputs.recipient_worker_id
+LEFT JOIN workers AS warehouse_manager ON warehouse_manager.id = invoice_outputs.warehouse_manager_worker_id
+LEFT JOIN workers AS recipient_worker ON recipient_worker.id = invoice_outputs.recipient_worker_id
 INNER JOIN teams ON teams.id = invoice_outputs.team_id
-INNER JOIN team_leaders ON teams.id = team_leaders.team_id
-INNER JOIN workers AS leader_worker ON leader_worker.id = team_leaders.leader_worker_id
+LEFT JOIN team_leaders ON teams.id = team_leaders.team_id
+LEFT JOIN workers AS leader_worker ON leader_worker.id = team_leaders.leader_worker_id
 WHERE
     invoice_outputs.project_id = $1
     AND COALESCE(invoice_outputs.confirmation, false) = true
@@ -616,8 +616,8 @@ SELECT
     teams.id                                                                                  AS value,
     (COALESCE(teams.number, '') || ' (' || COALESCE(workers.name, '') || ')')::text           AS label
 FROM teams
-INNER JOIN team_leaders ON team_leaders.team_id = teams.id
-INNER JOIN workers ON workers.id = team_leaders.leader_worker_id
+LEFT JOIN team_leaders ON team_leaders.team_id = teams.id
+LEFT JOIN workers ON workers.id = team_leaders.leader_worker_id
 WHERE teams.id IN (
     SELECT DISTINCT(invoice_outputs.team_id)
     FROM invoice_outputs
@@ -779,10 +779,10 @@ SELECT
     districts.id                                        AS district_id,
     COALESCE(teams.number, '')::text                    AS team_name,
     teams.id                                            AS team_id,
-    warehouse_manager.id                                AS warehouse_manager_id,
+    COALESCE(warehouse_manager.id, 0)::bigint           AS warehouse_manager_id,
     COALESCE(warehouse_manager.name, '')::text          AS warehouse_manager_name,
     COALESCE(released.name, '')::text                   AS released_name,
-    recipient.id                                        AS recipient_id,
+    COALESCE(recipient.id, 0)::bigint                   AS recipient_id,
     COALESCE(recipient.name, '')::text                  AS recipient_name,
     invoice_outputs.date_of_invoice                     AS date_of_invoice,
     COALESCE(invoice_outputs.confirmation, false)::boolean AS confirmation,
@@ -790,9 +790,9 @@ SELECT
 FROM invoice_outputs
 INNER JOIN districts ON districts.id = invoice_outputs.district_id
 INNER JOIN teams ON teams.id = invoice_outputs.team_id
-INNER JOIN workers AS warehouse_manager ON warehouse_manager.id = invoice_outputs.warehouse_manager_worker_id
-INNER JOIN workers AS released ON released.id = invoice_outputs.released_worker_id
-INNER JOIN workers AS recipient ON recipient.id = invoice_outputs.recipient_worker_id
+LEFT JOIN workers AS warehouse_manager ON warehouse_manager.id = invoice_outputs.warehouse_manager_worker_id
+LEFT JOIN workers AS released ON released.id = invoice_outputs.released_worker_id
+LEFT JOIN workers AS recipient ON recipient.id = invoice_outputs.recipient_worker_id
 WHERE
     invoice_outputs.project_id = $1
     AND (NULLIF($2::bigint, 0) IS NULL OR invoice_outputs.district_id = $2)

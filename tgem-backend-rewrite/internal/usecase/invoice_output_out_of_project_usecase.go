@@ -542,7 +542,7 @@ func (u *invoiceOutputOutOfProjectUsecase) GetMaterialsForEdit(id, projectID uin
 		ProjectID: pgInt8(projectID),
 	})
 	if err != nil {
-		return []dto.InvoiceOutputMaterialsForEdit{}, nil
+		return []dto.InvoiceOutputMaterialsForEdit{}, err
 	}
 
 	data := make([]dto.InvoiceOutputMaterialsForEdit, len(rows))
