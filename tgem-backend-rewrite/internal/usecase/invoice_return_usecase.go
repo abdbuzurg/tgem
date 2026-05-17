@@ -838,11 +838,15 @@ func (u *invoiceReturnUsecase) GetMaterialsInLocation(projectID, locationID uint
 
 	out := []dto.InvoiceReturnMaterialForSelect{}
 	for _, m := range materials {
-		amount, err := u.q.GetUniqueMaterialTotalAmount(ctx, db.GetUniqueMaterialTotalAmountParams{
-			ProjectID:      pgInt8(projectID),
-			LocationType:   pgText(locationType),
-			LocationID:     pgInt8(locationID),
-			MaterialCostID: pgInt8(uint(m.ID)),
+		// m.ID is materials.id. The available amount must be summed across all
+		// material_cost variants of this material at the location — querying by
+		// material_cost_id with a material_id would always miss (the picker then
+		// shows 0 available and the form becomes unusable).
+		amount, err := u.q.GetTotalAmountInLocation(ctx, db.GetTotalAmountInLocationParams{
+			ProjectID:    pgInt8(projectID),
+			ID:           int64(m.ID),
+			LocationType: pgText(locationType),
+			LocationID:   pgInt8(locationID),
 		})
 		if errors.Is(err, pgx.ErrNoRows) {
 			amount = pgNumericFromFloat64(0)

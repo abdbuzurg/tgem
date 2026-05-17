@@ -293,3 +293,47 @@ func TestInvoiceReturn_OverReturn_GracefulError(t *testing.T) {
 		t.Fatalf("expected insufficient-material error, got: %q", msg)
 	}
 }
+
+// TestInvoiceReturn_MaterialPicker_ReturnsRealAmount is a regression test for
+// the wrong-id bug in GetMaterialsInLocation: the return form's material
+// picker must report the REAL available amount (summed across all cost
+// variants of the material at the location), not 0. Before the fix the
+// available amount was looked up with materials.id passed as a
+// material_cost_id, so the picker always showed 0 and the form was unusable.
+func TestInvoiceReturn_MaterialPicker_ReturnsRealAmount(t *testing.T) {
+	if err := helpers.ResetDB(); err != nil {
+		t.Fatalf("ResetDB: %v", err)
+	}
+	token := helpers.LoginAsTester(t)
+
+	mat := helpers.Material(t, 1, "Wire PK", "WIRE-PK", "м")
+	cost1 := helpers.MaterialCost(t, mat.ID, 5.0, 6.0)
+	cost2 := helpers.MaterialCost(t, mat.ID, 7.0, 8.0) // second cost variant
+	leader := helpers.Worker(t, 1, "Lead PK", "Бригадир")
+	team := helpers.Team(t, 1, "T-PK", "+992900000030", "Acme", []uint{leader.ID})
+	helpers.TeamStock(t, 1, team.ID, cost1.ID, 100)
+	helpers.TeamStock(t, 1, team.ID, cost2.ID, 30)
+
+	teamID := strconv.FormatUint(uint64(team.ID), 10)
+	env := helpers.AuthedJSON(t, "GET", "/return/material/team/"+teamID, token, nil)
+	helpers.AssertSuccess(t, env, "GET /return/material/team/:id")
+
+	var picks []struct {
+		MaterialID uint    `json:"materialID"`
+		Amount     float64 `json:"amount"`
+	}
+	helpers.MustDecode(t, env, &picks)
+
+	found := false
+	for _, p := range picks {
+		if p.MaterialID == mat.ID {
+			found = true
+			if p.Amount != 130 {
+				t.Fatalf("picker amount = %v, want 130 (100 + 30 across cost variants)", p.Amount)
+			}
+		}
+	}
+	if !found {
+		t.Fatalf("material %d missing from picker: %+v", mat.ID, picks)
+	}
+}
